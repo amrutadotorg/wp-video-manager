@@ -23,10 +23,13 @@ Plugin korzysta z Webpacka do budowania plików w katalogu `dist/`.
     ```
 
 ### 3. Deploy flow (Local environment)
-Aby zaktualizować plugin w lokalnej instalacji WordPress (kontenerze), użyj komendy:
+Aby zaktualizować plugin w lokalnej instalacji WordPress (kontenerze), kopiujemy **tylko** plik główny i skompilowany folder `dist/`:
 ```bash
 sudo cp -r video-chapters-manager.php dist/ ~/containers/amruta_wp/wp-content/plugins/video-manager-php/
 ```
+
+> [!TIP]
+> W docelowym folderze `plugins/video-manager-php/` **nie potrzebujesz** plików źródłowych (`src/`, `package.json`, `webpack.config.js`). Możesz je bezpiecznie usunąć, aby zachować porządek.
 
 ### 4. Struktura bazy danych
 Plugin korzysta z dwóch głównych tabel:
