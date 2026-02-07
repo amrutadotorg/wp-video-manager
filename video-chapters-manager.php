@@ -11,6 +11,9 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+// Include Sync Queue class
+require_once __DIR__ . '/class-sync-queue.php';
+
 // At the top of your PHP file
 if (defined('WP_DEBUG') && WP_DEBUG) {
     error_reporting(E_ALL);
@@ -238,7 +241,12 @@ public function save_chapters() {
 
         // Log success
         error_log("Successfully saved " . count($validated_chapters) . " chapters for video $internal_id (Post $post_id)");
-        update_post_meta($post_id, '_desc_synced_yt', '0');
+        
+        // Trigger sync worker for YouTube
+        if (class_exists('Sync_Queue')) {
+            Sync_Queue::queue_task($post_id, 'youtube', 10, $youtube_id, 'video-chapters-manager');
+        }
+
         wp_send_json_success([
             'message' => empty($chapters) ? 'Chapters cleared successfully' : 'Chapters saved successfully',
             'post_id' => $post_id,
