@@ -22,7 +22,13 @@ Plugin korzysta z Webpacka do budowania plików w katalogu `dist/`.
     npm run dev
     ```
 
-### 3. Struktura bazy danych
+### 3. Deploy flow (Local environment)
+Aby zaktualizować plugin w lokalnej instalacji WordPress (kontenerze), użyj komendy:
+```bash
+sudo cp -r video-chapters-manager.php dist/ ~/containers/amruta_wp/wp-content/plugins/video-manager-php/
+```
+
+### 4. Struktura bazy danych
 Plugin korzysta z dwóch głównych tabel:
 - `wp_post_videos` - przechowuje powiązanie wideo (YouTube ID) z postem WordPress.
 - `wp_post_video_chapters` - przechowuje poszczególne rozdziały (czas startu, tytuł, kolejność).
