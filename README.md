@@ -10,6 +10,11 @@ Jeśli pracujesz w nowym środowisku, najpierw zainstaluj paczki npm:
 npm install
 ```
 
+W przypadku komunikatów o lukach bezpieczeństwa (*vulnerabilities*), możesz użyć:
+```bash
+npm audit fix
+```
+
 ### 2. Kompilacja assetów (JS/CSS)
 Plugin korzysta z Webpacka do budowania plików w katalogu `dist/`.
 
