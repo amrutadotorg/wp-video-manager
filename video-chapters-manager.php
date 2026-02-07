@@ -107,50 +107,15 @@ public function get_chapter_titles() {
     global $wpdb;
     $term = isset($_POST['term']) ? sanitize_text_field($_POST['term']) : '';
 
-    // Simpler, more reliable query
     $query = $wpdb->prepare("
-        SELECT DISTINCT meta_value 
-        FROM {$wpdb->postmeta} 
-        WHERE meta_key LIKE %s 
-        AND meta_value IS NOT NULL
-        AND meta_value != ''
-    ", $this->youtube_meta_prefix . '%');
+        SELECT DISTINCT title 
+        FROM {$wpdb->prefix}post_video_chapters 
+        WHERE title LIKE %s 
+        ORDER BY title ASC 
+        LIMIT 10
+    ", '%' . $wpdb->esc_like($term) . '%');
 
-    $results = $wpdb->get_col($query);
-    $titles = [];
-
-    // Process JSON data
-    foreach ($results as $json_data) {
-        $chapters = json_decode($json_data, true);
-        if (is_array($chapters)) {
-            foreach ($chapters as $chapter) {
-                if (isset($chapter['title']) && !empty($chapter['title'])) {
-                    $titles[] = $chapter['title'];
-                }
-            }
-        }
-    }
-
-    // Remove duplicates and sort
-    $titles = array_unique($titles);
-    sort($titles);
-
-    // Filter by term if provided
-    if (!empty($term)) {
-        $term = strtolower($term);
-        $titles = array_filter($titles, function($title) use ($term) {
-            return str_contains(strtolower($title), $term);
-        });
-    }
-
-    // Return only first 10 results
-    $titles = array_values(array_slice($titles, 0, 10));
-
-    // Add debug information
-    if (WP_DEBUG) {
-        error_log('Chapter Titles Query: ' . $query);
-        error_log('Results: ' . print_r($titles, true));
-    }
+    $titles = $wpdb->get_col($query);
 
     wp_send_json($titles);
 }
@@ -166,32 +131,29 @@ public function get_chapter_titles() {
     $youtube_id = sanitize_text_field($_POST['youtube_id']);
 
     $video_data = $wpdb->get_row($wpdb->prepare("
-        SELECT p.ID, p.post_title, yt.meta_value as ytid
-        FROM {$wpdb->posts} p
-        JOIN {$wpdb->postmeta} yt ON p.ID = yt.post_id
-        WHERE yt.meta_key IN ('youtube', 'youtube_yogi')
-        AND yt.meta_value = %s
+        SELECT v.id as internal_id, v.post_id, p.post_title, v.video_id as ytid
+        FROM {$wpdb->prefix}post_videos v
+        JOIN {$wpdb->posts} p ON v.post_id = p.ID
+        WHERE v.platform = 'youtube' AND v.video_id = %s
         LIMIT 1
     ", $youtube_id));
 
     if ($video_data) {
-        $chapters = get_post_meta($video_data->ID, $this->youtube_meta_prefix . $youtube_id, true);
-        
-        // Ensure proper JSON encoding
-        $chapters_array = json_decode($chapters, true);
-        if (json_last_error() === JSON_ERROR_NONE) {
-            // Re-encode with proper options to avoid escape issues
-            $chapters = json_encode($chapters_array, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-        }
+        $chapters_results = $wpdb->get_results($wpdb->prepare("
+            SELECT start_time as startChapter, title 
+            FROM {$wpdb->prefix}post_video_chapters 
+            WHERE video_id = %d 
+            ORDER BY sort_order ASC
+        ", $video_data->internal_id), ARRAY_A);
         
         wp_send_json_success([
-            'id'       => $video_data->ID,
+            'id'       => $video_data->post_id,
             'title'    => $video_data->post_title,
             'ytid'     => $youtube_id,
-            'chapters' => $chapters ?: '[]',
+            'chapters' => json_encode($chapters_results, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
         ]);
     } else {
-        wp_send_json_error('Video not found');
+        wp_send_json_error('Video not found in wp_post_videos');
     }
 }
 
@@ -246,33 +208,41 @@ public function save_chapters() {
             throw new Exception('JSON encoding failed: ' . json_last_error_msg());
         }
 
-        // 6. Database update with explicit error handling
-        $meta_key = $this->youtube_meta_prefix . $youtube_id;
-        
-        // Delete existing meta first to ensure clean update
-        delete_post_meta($post_id, $meta_key);
-        
-        // Now add the new meta
-        $result = add_post_meta($post_id, $meta_key, $encoded_chapters, true);
-        
-        if ($result === false) {
-            // Get the last MySQL error
-            $db_error = $wpdb->last_error;
-            error_log("Database Error in save_chapters: " . $db_error);
-            error_log("Meta Key: " . $meta_key);
-            error_log("Post ID: " . $post_id);
-            error_log("Chapters Length: " . strlen($encoded_chapters));
-            
-            throw new Exception('Database update failed: ' . $db_error);
+        // 6. Database update
+        // Get internal video ID from wp_post_videos
+        $internal_id = $wpdb->get_var($wpdb->prepare("
+            SELECT id FROM {$wpdb->prefix}post_videos 
+            WHERE platform = 'youtube' AND video_id = %s AND post_id = %d
+        ", $youtube_id, $post_id));
+
+        if (!$internal_id) {
+            throw new Exception("Internal video record not found for YouTube ID $youtube_id");
+        }
+
+        // Delete existing chapters for this video
+        $wpdb->delete("{$wpdb->prefix}post_video_chapters", ['video_id' => $internal_id]);
+
+        // Insert new chapters
+        foreach ($validated_chapters as $index => $chapter) {
+            $result = $wpdb->insert("{$wpdb->prefix}post_video_chapters", [
+                'video_id'   => $internal_id,
+                'start_time' => $chapter['startChapter'],
+                'title'      => $chapter['title'],
+                'sort_order' => $index + 1
+            ]);
+
+            if ($result === false) {
+                throw new Exception('Failed to insert chapter: ' . $wpdb->last_error);
+            }
         }
 
         // Log success
-        error_log("Successfully saved chapters for post $post_id with YouTube ID $youtube_id");
+        error_log("Successfully saved " . count($validated_chapters) . " chapters for video $internal_id (Post $post_id)");
         update_post_meta($post_id, '_desc_synced_yt', '0');
         wp_send_json_success([
             'message' => empty($chapters) ? 'Chapters cleared successfully' : 'Chapters saved successfully',
             'post_id' => $post_id,
-            'meta_key' => $meta_key,
+            'video_id' => $internal_id,
             'chapter_count' => count($validated_chapters)
         ]);
 
