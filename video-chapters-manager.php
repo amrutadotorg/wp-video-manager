@@ -6,62 +6,31 @@
  * Author: Your Name
  */
 
-// Prevent direct access
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-// Include Sync Queue class
-if ( ! class_exists( 'Sync_Queue' ) ) {
-	require_once __DIR__ . '/class-sync-queue.php';
+// Load dependencies
+foreach ( array( 'class-video-chapters-db.php', 'class-sync-queue.php', 'class-ajax-handlers.php' ) as $dep_file ) {
+	$dep_path = __DIR__ . '/' . $dep_file;
+	if ( file_exists( $dep_path ) && ! class_exists( basename( $dep_file, '.php' ) ) ) {
+		require_once $dep_path;
+	}
 }
 
 class VideoChaptersManager {
 
+	private $ajax;
+
 	public function __construct() {
+		$this->ajax = new Video_Chapters_AJAX();
+
 		add_action( 'admin_menu', array( $this, 'add_admin_menu' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_assets' ) );
 
-		add_action( 'wp_ajax_save_chapters', array( $this, 'save_chapters' ) );
-		add_action( 'wp_ajax_search_video', array( $this, 'search_video' ) );
-		add_action( 'wp_ajax_get_chapter_titles', array( $this, 'get_chapter_titles' ) );
-	}
-
-	/**
-	 * Create custom tables on plugin activation.
-	 */
-	public static function activate() {
-		global $wpdb;
-
-		$charset_collate = $wpdb->get_charset_collate();
-
-		$sql_videos = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}post_videos (
-            id bigint(20) NOT NULL AUTO_INCREMENT,
-            post_id bigint(20) NOT NULL,
-            video_id varchar(255) NOT NULL,
-            platform varchar(50) NOT NULL DEFAULT 'youtube',
-            is_old tinyint(1) NOT NULL DEFAULT 0,
-            created_at datetime DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY post_id (post_id),
-            KEY video_id (video_id),
-            UNIQUE KEY platform_video (platform, video_id)
-        ) $charset_collate;";
-
-		$sql_chapters = "CREATE TABLE IF NOT EXISTS {$wpdb->prefix}post_video_chapters (
-            id bigint(20) NOT NULL AUTO_INCREMENT,
-            video_id bigint(20) NOT NULL,
-            start_time varchar(20) NOT NULL,
-            title varchar(255) NOT NULL,
-            sort_order int(11) NOT NULL DEFAULT 0,
-            PRIMARY KEY (id),
-            KEY video_id (video_id),
-            KEY sort_order (sort_order)
-        ) $charset_collate;";
-
-		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-		dbDelta( $sql_videos );
-		dbDelta( $sql_chapters );
+		add_action( 'wp_ajax_save_chapters', array( $this->ajax, 'save_chapters' ) );
+		add_action( 'wp_ajax_search_video', array( $this->ajax, 'search_video' ) );
+		add_action( 'wp_ajax_get_chapter_titles', array( $this->ajax, 'get_chapter_titles' ) );
 	}
 
 	public function enqueue_assets( $hook ) {
@@ -120,213 +89,8 @@ class VideoChaptersManager {
 		</div>
 		<?php
 	}
-
-	/**
-	 * AJAX: Autocomplete chapter titles
-	 */
-	public function get_chapter_titles() {
-		check_ajax_referer( 'video-chapters-nonce', 'nonce' );
-
-		global $wpdb;
-		$term = isset( $_POST['term'] ) ? sanitize_text_field( $_POST['term'] ) : '';
-
-		$query = $wpdb->prepare(
-			"
-            SELECT DISTINCT title
-            FROM {$wpdb->prefix}post_video_chapters
-            WHERE title LIKE %s
-            ORDER BY title ASC
-            LIMIT 10
-        ",
-			'%' . $wpdb->esc_like( $term ) . '%'
-		);
-
-		$titles = $wpdb->get_col( $query ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared
-
-		wp_send_json( $titles );
-	}
-
-	/**
-	 * AJAX: Search video by YouTube ID
-	 */
-	public function search_video() {
-		check_ajax_referer( 'video-chapters-nonce', 'nonce' );
-
-		if ( ! current_user_can( 'edit_posts' ) ) {
-			wp_send_json_error( 'Insufficient permissions', 403 );
-		}
-
-		global $wpdb;
-		$youtube_id = sanitize_text_field( $_POST['youtube_id'] );
-
-		$video_data = $wpdb->get_row(
-			$wpdb->prepare(
-				"
-            SELECT v.id as internal_id, v.post_id, p.post_title, v.video_id as ytid
-            FROM {$wpdb->prefix}post_videos v
-            JOIN {$wpdb->posts} p ON v.post_id = p.ID
-            WHERE v.platform = 'youtube' AND v.video_id = %s
-            LIMIT 1
-        ",
-				$youtube_id
-			)
-		);
-
-		if ( $video_data ) {
-			$chapters_results = $wpdb->get_results(
-				$wpdb->prepare(
-					"
-                SELECT start_time as startChapter, title
-                FROM {$wpdb->prefix}post_video_chapters
-                WHERE video_id = %d
-                ORDER BY sort_order ASC
-            ",
-					$video_data->internal_id
-				),
-				ARRAY_A
-			);
-
-			wp_send_json_success(
-				array(
-					'id'       => $video_data->post_id,
-					'title'    => esc_html( $video_data->post_title ),
-					'ytid'     => esc_attr( $youtube_id ),
-					'chapters' => wp_json_encode( $chapters_results, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ),
-				)
-			);
-		} else {
-			wp_send_json_error( 'Video not found in wp_post_videos' );
-		}
-	}
-
-	/**
-	 * AJAX: Save chapters for a video
-	 */
-	public function save_chapters() {
-		try {
-			global $wpdb;
-
-			if ( ! check_ajax_referer( 'video-chapters-nonce', 'nonce', false ) ) {
-				throw new Exception( 'Security verification failed' );
-			}
-
-			if ( ! current_user_can( 'edit_posts' ) ) {
-				wp_send_json_error( array( 'message' => 'Insufficient permissions' ), 403 );
-			}
-
-			$post_id    = filter_input( INPUT_POST, 'video_id', FILTER_VALIDATE_INT );
-			$youtube_id = isset( $_POST['youtube_id'] ) ? sanitize_text_field( $_POST['youtube_id'] ) : '';
-			$chapters   = isset( $_POST['chapters'] ) ? $_POST['chapters'] : array();
-
-			if ( ! $post_id || ! $youtube_id ) {
-				throw new Exception(
-					'Missing required data: ' .
-					( ! $post_id ? 'post_id ' : '' ) .
-					( ! $youtube_id ? 'youtube_id' : '' )
-				);
-			}
-
-			if ( ! get_post( $post_id ) ) {
-				throw new Exception( "Post $post_id not found" );
-			}
-
-			$validated_chapters = array();
-			if ( ! empty( $chapters ) ) {
-				$validated_chapters = array_map(
-					function ( $chapter ) {
-						return array(
-							'startChapter' => sanitize_text_field( $chapter['startChapter'] ),
-							'title'        => sanitize_text_field( stripslashes( $chapter['title'] ) ),
-						);
-					},
-					$chapters
-				);
-			}
-
-			$internal_id = $wpdb->get_var(
-				$wpdb->prepare(
-					"
-                SELECT id FROM {$wpdb->prefix}post_videos
-                WHERE platform = 'youtube' AND video_id = %s AND post_id = %d
-            ",
-					$youtube_id,
-					$post_id
-				)
-			);
-
-			if ( ! $internal_id ) {
-				throw new Exception( "Internal video record not found for YouTube ID $youtube_id" );
-			}
-
-			$wpdb->query( 'START TRANSACTION' );
-
-			$wpdb->delete( "{$wpdb->prefix}post_video_chapters", array( 'video_id' => $internal_id ) );
-
-			foreach ( $validated_chapters as $index => $chapter ) {
-				$result = $wpdb->insert(
-					"{$wpdb->prefix}post_video_chapters",
-					array(
-						'video_id'   => $internal_id,
-						'start_time' => $chapter['startChapter'],
-						'title'      => $chapter['title'],
-						'sort_order' => $index + 1,
-					)
-				);
-
-				if ( false === $result ) {
-					$wpdb->query( 'ROLLBACK' );
-					throw new Exception( 'Failed to insert chapter: ' . $wpdb->last_error );
-				}
-			}
-
-			$wpdb->query( 'COMMIT' );
-
-			error_log( 'Successfully saved ' . count( $validated_chapters ) . " chapters for video $internal_id (Post $post_id)" );
-
-			if ( class_exists( 'Sync_Queue' ) ) {
-				Sync_Queue::queue_task( $post_id, 'youtube', 10, $youtube_id, 'video-chapters-manager' );
-			}
-
-			wp_send_json_success(
-				array(
-					'message'       => empty( $chapters ) ? 'Chapters cleared successfully' : 'Chapters saved successfully',
-					'post_id'       => $post_id,
-					'video_id'      => $internal_id,
-					'chapter_count' => count( $validated_chapters ),
-				)
-			);
-
-		} catch ( Exception $e ) {
-			error_log( 'Video Chapters Manager Error: ' . $e->getMessage() );
-			error_log(
-				'Error context: ' . print_r(
-					array(
-						'post_id'         => $post_id ?? 'not set',
-						'youtube_id'      => $youtube_id ?? 'not set',
-						'wpdb_last_error' => $wpdb->last_error ?? 'no error',
-						'wpdb_last_query' => $wpdb->last_query ?? 'no query',
-						'php_error'       => error_get_last(),
-					),
-					true
-				)
-			);
-
-			wp_send_json_error(
-				array(
-					'message' => $e->getMessage(),
-					'debug'   => WP_DEBUG ? array(
-						'db_error' => $wpdb->last_error,
-						'db_query' => $wpdb->last_query,
-						'trace'    => $e->getTraceAsString(),
-					) : null,
-				)
-			);
-		}
-	}
 }
 
-// Initialize the plugin
 new VideoChaptersManager();
 
-// Register activation hook (must be called at plugin load time)
-register_activation_hook( __FILE__, array( 'VideoChaptersManager', 'activate' ) );
+register_activation_hook( __FILE__, array( 'Video_Chapters_DB', 'activate' ) );
