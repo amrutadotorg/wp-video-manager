@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import 'bootstrap';
-import 'jquery-ui-dist/jquery-ui'; // If jQuery UI must be used, keep this.
+import 'jquery-ui-dist/jquery-ui.js'; // If jQuery UI must be used, keep this.
 import './video-chapters.css';
 
 const API = {
@@ -101,8 +101,6 @@ const createChapterRow = (chapter = {}) => {
   const titleField = row.find('.chapter-title');
   titleField.autocomplete({
     source: function(request, response) {
-      console.log(`Autocomplete triggered. User input: ${request.term}`);
-
       $.ajax({
         url: videoChapters.ajaxurl,
         type: 'POST',
@@ -112,20 +110,13 @@ const createChapterRow = (chapter = {}) => {
           nonce: videoChapters.nonce,
         },
         success: function(data) {
-          console.log('Autocomplete AJAX response:', data);
           if (Array.isArray(data)) {
             response(data.slice(0, 10));
           } else {
-            console.error('Invalid response format:', data);
             response([]);
           }
         },
-        error: function(xhr, status, error) {
-          console.error('Autocomplete AJAX error:', {
-            status: status,
-            error: error,
-            response: xhr.responseText
-          });
+        error: function() {
           response([]);
         }
       });
@@ -185,21 +176,12 @@ $('#youtube-id').on('keypress', function(e) {
 $('#add-chapter')
   .off('click') // Remove any previously attached listeners
   .on('click', () => {
-    console.log('Add Chapter clicked'); // Log button click
+    const newChapterRow = createChapterRow();
+    $('#chapters-container').append(newChapterRow);
 
-    const newChapterRow = createChapterRow(); // Create a new chapter row
-    $('#chapters-container').append(newChapterRow); // Append it to the container
-
-    // Initialize new row's time input validation
     const timeField = newChapterRow.find('.chapter-time');
     initializeTimeInput(timeField);
 
-    // Debug: Check if autocomplete is initialized on the new row
-    const lastTitleField = $('#chapters-container .chapter-title').last();
-    console.log('New Chapter Title Field:', lastTitleField);
-    console.log('Event Listeners on New Title Field:', $._data(lastTitleField[0], 'events'));
-
-    // Auto-focus the time input of the new row
     timeField.focus();
   });
 
@@ -245,7 +227,7 @@ const saveChapters = async () => {
   let timeErrors = [];
 
   // Collect and validate chapters
-  $('.chapter-row').each(function(index) {
+  $('.chapter-row').each(function(_index) {
     const $row = $(this);
     const startTime = $row.find('.chapter-time').val().trim();
     const title = $row.find('.chapter-title').val().trim();
@@ -316,7 +298,6 @@ const saveChapters = async () => {
       throw new Error(response.data?.message || 'Unknown error occurred');
     }
   } catch (error) {
-    console.error('Save error:', error);
     const errorMessage = error.responseJSON?.data?.message || error.message || 'Failed to save chapters.';
     showMessage(errorMessage, 'danger');
   } finally {
@@ -377,73 +358,6 @@ const searchVideo = async () => {
 
 
 
-
-const createExistingChapterRow = (chapter = {}) => {
-  const timeStr = chapter.startChapter || '0:00';
-  const title = chapter.title || '';
-
-  return `
-    <div class="chapter-row mb-3">
-      <div class="row">
-        <div class="col-md-4">
-          <div class="form-group">
-            <label>Start Time</label>
-            <input type="text" class="form-control chapter-time" value="${timeStr}" placeholder="0:00">
-          </div>
-        </div>
-        <div class="col-md-6">
-          <div class="form-group">
-            <label>Title</label>
-            <input type="text" class="form-control chapter-title" value="${title}" placeholder="Chapter Title">
-          </div>
-        </div>
-        <div class="col-md-2">
-          <button type="button" class="btn btn-danger remove-chapter">Remove</button>
-        </div>
-      </div>
-    </div>
-  `;
-};
-const attachAutocomplete = (field) => {
-  let cachedTitles = null;
-
-  field.autocomplete({
-    source: function (request, response) {
-      if (cachedTitles) {
-        console.log('Using cached titles for autocomplete'); // Debug log
-        const matches = cachedTitles.filter((title) =>
-          title.toLowerCase().includes(request.term.toLowerCase())
-        );
-        response(matches.slice(0, 10));
-      } else {
-        console.log('Fetching titles via AJAX'); // Debug log
-        $.ajax({
-          url: videoChapters.ajaxurl,
-          type: 'POST',
-          data: {
-            action: 'get_chapter_titles',
-            term: request.term,
-            nonce: videoChapters.nonce,
-          },
-          success: function (data) {
-            cachedTitles = data;
-            const matches = data.filter((title) =>
-              title.toLowerCase().includes(request.term.toLowerCase())
-            );
-            response(matches.slice(0, 10));
-          },
-          error: function (error) {
-            console.error('Autocomplete AJAX error:', error);
-            response([]);
-          },
-        });
-      }
-    },
-    minLength: 1, // Start suggesting after 1 character
-  });
-
-  console.log('Autocomplete attached to:', field); // Debug log for successful attachment
-};
 
 const initializeTimeInput = (input) => {
   const $input = $(input);
@@ -529,16 +443,12 @@ const showMessage = (message, type = 'info') => {
   }
 };
 
-let isAddChapterInitialized = false; // Guard variable
-
 (function ($) {
   $(document).ready(() => {
     initializeApp();
     
-    // Remove chapter event binding
     $(document).on('click', '.remove-chapter', function () {
       $(this).closest('.chapter-row').remove();
-      console.log('Chapter row removed');
     });
   });
 })(jQuery);

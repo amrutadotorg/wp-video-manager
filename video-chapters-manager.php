@@ -12,7 +12,9 @@ if (!defined('ABSPATH')) {
 }
 
 // Include Sync Queue class
-require_once __DIR__ . '/class-sync-queue.php';
+if (!class_exists('Sync_Queue')) {
+    require_once __DIR__ . '/class-sync-queue.php';
+}
 
 // At the top of your PHP file
 if (defined('WP_DEBUG') && WP_DEBUG) {

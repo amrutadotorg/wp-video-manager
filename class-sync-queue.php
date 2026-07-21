@@ -5,6 +5,7 @@
  *
  * Manages insertions into the nvp_sync_queue table.
  */
+if (!class_exists('Sync_Queue')) {
 class Sync_Queue {
 
     /**
@@ -62,9 +63,22 @@ class Sync_Queue {
         $result = $wpdb->query($prepared_sql);
 
         if ($result) {
-            WP_CLI::log("Queued sync task: post_id=$post_id, target=$target, priority=$priority");
+            $log_parts = ["post_id=$post_id", "target=$target", "priority=$priority"];
+            if ($ytid !== null) {
+                $log_parts[] = "ytid=$ytid";
+            }
+            // Look up vimeo id for this post
+            $vimeo_id = $wpdb->get_var($wpdb->prepare(
+                "SELECT video_id FROM {$wpdb->prefix}post_videos WHERE post_id = %d AND platform = 'vimeo' AND is_old = 0 LIMIT 1",
+                $post_id
+            ));
+            if ($vimeo_id) {
+                $log_parts[] = "vimeoid=$vimeo_id";
+            }
+            WP_CLI::log("Queued sync task: " . implode(', ', $log_parts));
         } 
 
         return $result;
     }
+}
 }

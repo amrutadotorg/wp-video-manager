@@ -1,48 +1,51 @@
-const path = require('path');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const TerserPlugin = require('terser-webpack-plugin');
-const CssMinimizerPlugin = require('css-minimizer-webpack-plugin');
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import MiniCssExtractPlugin from 'mini-css-extract-plugin';
+import TerserPlugin from 'terser-webpack-plugin';
+import CssMinimizerPlugin from 'css-minimizer-webpack-plugin';
 
-module.exports = {
-    entry: './src/video-chapters.js', // Entry point for your JavaScript
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+export default {
+    entry: './src/video-chapters.js',
     output: {
-        filename: 'video-chapters.min.js', // Output JavaScript file
-        path: path.resolve(__dirname, 'dist'), // Output directory
-        clean: true, // Clean the output directory before each build
+        filename: 'video-chapters.min.js',
+        path: path.resolve(__dirname, 'dist'),
+        clean: true,
     },
     module: {
         rules: [
             {
-                test: /\.js$/, // Match JavaScript files
-                exclude: /node_modules/, // Exclude dependencies
+                test: /\.js$/,
+                exclude: /node_modules/,
                 use: {
                     loader: 'babel-loader',
                     options: {
-                        presets: ['@babel/preset-env'], // Use Babel for modern JS
+                        presets: ['@babel/preset-env'],
                     },
                 },
             },
             {
-                test: /\.css$/, // Match CSS files
+                test: /\.css$/,
                 use: [
-                    MiniCssExtractPlugin.loader, // Extract CSS into a separate file
-                    'css-loader', // Translates CSS into CommonJS
+                    MiniCssExtractPlugin.loader,
+                    'css-loader',
                 ],
             },
         ],
     },
     plugins: [
         new MiniCssExtractPlugin({
-            filename: 'video-chapters.min.css', // Output CSS file
+            filename: 'video-chapters.min.css',
         }),
     ],
     optimization: {
-        minimize: true, // Enable code minimization
+        minimize: true,
         minimizer: [
-            new TerserPlugin(), // Minimize JavaScript
-            new CssMinimizerPlugin(), // Minimize CSS
+            new TerserPlugin(),
+            new CssMinimizerPlugin(),
         ],
     },
-    devtool: 'source-map', // Generate source maps for debugging
-    mode: 'production', // Set Webpack to production mode
+    devtool: 'source-map',
+    mode: 'production',
 };
