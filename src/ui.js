@@ -103,22 +103,45 @@ export const createChapterRow = (chapter = {}) => {
   initializeTimeInput(row.find('.chapter-time'));
 
   const titleField = row.find('.chapter-title').val(title);
+
   titleField.autocomplete({
     source: function(request, response) {
-      getChapterTitlesAPI(request.term).then(
+      const term = request.term.trim();
+
+      getChapterTitlesAPI(term).then(
         (data) => {
-          if (Array.isArray(data)) {
-            response(data.slice(0, 10));
-          } else {
-            response([]);
+          const existing = Array.isArray(data) ? data.slice(0, 10) : [];
+          const lowerTerm = term.toLowerCase();
+          const exactMatch = existing.some(
+            (t) => t.trim().toLowerCase() === lowerTerm
+          );
+
+          const items = existing.map((t) => ({ label: t, value: t, isNew: false }));
+
+          if (!exactMatch && term.length >= 3) {
+            items.push({
+              label: `+ Dodaj nowy tytuł: „${term}"`,
+              value: term,
+              isNew: true,
+            });
           }
+
+          response(items);
         },
         () => response([])
       );
     },
-    minLength: 1,
+    minLength: 3,
     delay: 300,
   });
+
+  titleField.autocomplete('instance')._renderItem = function(ul, item) {
+    return $('<li>')
+      .toggleClass('vcm-suggestion-new', !!item.isNew)
+      .toggleClass('vcm-suggestion-existing', !item.isNew)
+      .append($('<div>').text(item.label))
+      .appendTo(ul);
+  };
 
   return row;
 };

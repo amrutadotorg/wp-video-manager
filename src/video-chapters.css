@@ -116,6 +116,18 @@
   z-index: 160000 !important;
 }
 
+/* Autocomplete — existing and new title suggestions */
+.vcm-suggestion-existing {
+  padding: 4px 8px;
+}
+
+.vcm-suggestion-new {
+  padding: 4px 8px;
+  border-top: 1px solid var(--border-color, #c3c4c7);
+  font-style: italic;
+  color: var(--wp-admin-theme-color, #2271b1);
+}
+
 /* Fix Dracula extension breaking the loading spinner */
 .ui-autocomplete-loading {
   background-image: none !important;
