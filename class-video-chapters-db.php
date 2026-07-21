@@ -84,11 +84,13 @@ if ( ! class_exists( 'Video_Chapters_DB' ) ) {
 
 			$query = $wpdb->prepare(
 				"
-				SELECT title
-				FROM {$wpdb->prefix}post_video_chapters
-				WHERE title LIKE %s
-				GROUP BY title
-				ORDER BY COUNT(*) DESC, title ASC
+				SELECT c.title
+				FROM {$wpdb->prefix}post_video_chapters c
+				INNER JOIN {$wpdb->prefix}post_videos v ON v.id = c.video_id
+				WHERE c.title LIKE %s
+				AND v.is_old = 0
+				GROUP BY c.title
+				ORDER BY COUNT(*) DESC, c.title ASC
 				LIMIT 10
 				",
 				'%' . $wpdb->esc_like( $term ) . '%'
