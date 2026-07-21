@@ -102,6 +102,19 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 					throw new Exception( "Internal video record not found for YouTube ID $youtube_id" );
 				}
 
+				// Check if chapters actually changed
+				$existing_chapters = $this->db->get_chapters( $internal_id );
+				if ( wp_json_encode( $existing_chapters ) === wp_json_encode( $validated_chapters ) ) {
+					wp_send_json_success(
+						array(
+							'message'       => 'No changes detected. Chapters are up to date.',
+							'post_id'       => $post_id,
+							'video_id'      => $internal_id,
+							'chapter_count' => count( $validated_chapters ),
+						)
+					);
+				}
+
 				$count = $this->db->save_chapters( $internal_id, $validated_chapters );
 
 				error_log( "Successfully saved $count chapters for video $internal_id (Post $post_id)" );
@@ -218,6 +231,14 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 			);
 		}
 
+		private function time_to_seconds( $time_str ) {
+			$parts = array_map( 'intval', explode( ':', $time_str ) );
+			if ( count( $parts ) === 3 ) {
+				return $parts[0] * 3600 + $parts[1] * 60 + $parts[2];
+			}
+			return $parts[0] * 60 + $parts[1];
+		}
+
 		/**
 		 * Sanitize and validate chapter data from POST.
 		 */
@@ -226,15 +247,40 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 				return array();
 			}
 
-			return array_map(
-				function ( $chapter ) {
-					return array(
-						'startChapter' => sanitize_text_field( $chapter['startChapter'] ),
-						'title'        => sanitize_text_field( stripslashes( $chapter['title'] ) ),
-					);
-				},
-				$chapters
-			);
+			$validated = array();
+			foreach ( $chapters as $chapter ) {
+				if ( empty( $chapter['startChapter'] ) || empty( $chapter['title'] ) ) {
+					continue;
+				}
+
+				if ( ! preg_match( '/^\d{1,2}:\d{2}(:\d{2})?$/', $chapter['startChapter'] ) ) {
+					throw new Exception( 'Invalid time format for chapter: ' . esc_html( $chapter['startChapter'] ) );
+				}
+
+				$validated[] = array(
+					'startChapter' => sanitize_text_field( $chapter['startChapter'] ),
+					'title'        => sanitize_text_field( stripslashes( $chapter['title'] ) ),
+				);
+			}
+
+			if ( count( $validated ) > 0 ) {
+				if ( count( $validated ) < 3 ) {
+					throw new Exception( 'You must include at least three separate chapters.' );
+				}
+
+				usort(
+					$validated,
+					function ( $a, $b ) {
+						return $this->time_to_seconds( $a['startChapter'] ) - $this->time_to_seconds( $b['startChapter'] );
+					}
+				);
+
+				if ( $this->time_to_seconds( $validated[0]['startChapter'] ) !== 0 ) {
+					throw new Exception( 'The very first timestamp on your list must be exactly 0:00.' );
+				}
+			}
+
+			return $validated;
 		}
 
 		/**

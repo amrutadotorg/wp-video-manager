@@ -42,7 +42,7 @@ export const isValidChapterTime = (newTime, existingChapters) => {
   for (const chapter of existingChapters) {
     const timeDifference = getTimeDifferenceInSeconds(newTime, chapter.startChapter);
 
-    if (timeDifference < 60) {
+    if (timeDifference < 10) {
       return {
         valid: false,
         conflictWith: chapter.startChapter,
@@ -66,4 +66,34 @@ export const extractYouTubeId = (input) => {
   }
 
   return null;
+};
+
+export const parseYouTubeTimeUrl = (inputStr) => {
+  if (!inputStr.includes('youtu') || (!inputStr.includes('t=') && !inputStr.includes('time_continue='))) {
+    return null;
+  }
+  
+  const match = inputStr.match(/[?&](?:t|time_continue)=([^&\s]+)/);
+  if (!match || !match[1]) return null;
+  
+  const t = match[1];
+  let seconds = 0;
+  
+  if (/^\d+s?$/.test(t)) {
+    seconds = parseInt(t, 10);
+  } else {
+    const hMatch = t.match(/(\d+)h/);
+    const mMatch = t.match(/(\d+)m/);
+    const sMatch = t.match(/(\d+)s/);
+    
+    if (hMatch) seconds += parseInt(hMatch[1], 10) * 3600;
+    if (mMatch) seconds += parseInt(mMatch[1], 10) * 60;
+    if (sMatch) seconds += parseInt(sMatch[1], 10);
+  }
+  
+  if (seconds === 0 && !/^\d+/.test(t) && !t.includes('s') && !t.includes('m') && !t.includes('h')) {
+      return null;
+  }
+  
+  return secondsToTimeStr(seconds) || '0:00';
 };

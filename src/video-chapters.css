@@ -116,6 +116,11 @@
   z-index: 160000 !important;
 }
 
+/* Fix Dracula extension breaking the loading spinner */
+.ui-autocomplete-loading {
+  background-image: none !important;
+}
+
 /* Responsive */
 @media (max-width: 782px) {
   .vcm-row-fields {

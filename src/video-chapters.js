@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import './video-chapters.css';
 
-import { extractYouTubeId, sortChapters, isValidChapterTime } from './validation.js';
+import { extractYouTubeId, sortChapters, isValidChapterTime, timeToSeconds } from './validation.js';
 import { searchVideoAPI, saveChaptersAPI } from './api.js';
 import { createChapterRow, showMessage, clearAllErrors } from './ui.js';
 
@@ -16,9 +16,12 @@ const initializeApp = () => {
       </div>
       <div id="video-info"></div>
       <div id="chapters-container"></div>
-      <div class="vcm-actions" style="display: none;">
+      <div class="vcm-actions" style="display: none; align-items: center;">
         <button class="button" id="add-chapter">Add Chapter</button>
         <button class="button button-primary" id="save-chapters">Save Chapters</button>
+        <span style="margin-left: 15px; color: #646970; font-size: 13px;">
+          💡 <strong>Tip:</strong> You can paste a YouTube URL with a timestamp (e.g., <code>?t=123</code>) directly into any <em>Start Time</em> field.
+        </span>
       </div>
     </div>
   `);
@@ -40,7 +43,7 @@ const initializeApp = () => {
     .on('click', () => {
       const newChapterRow = createChapterRow();
       $('#chapters-container').append(newChapterRow);
-      newChapterRow.find('.chapter-time').focus();
+      newChapterRow.find('.chapter-time').focus().select();
     });
 
   $('#save-chapters').on('click', saveChapters);
@@ -96,6 +99,18 @@ const saveChapters = async () => {
   }
 
   const sortedChapters = sortChapters(chapters);
+
+  if (sortedChapters.length > 0) {
+    if (sortedChapters.length < 3) {
+      showMessage('You must include at least three separate chapters.', 'error');
+      return;
+    }
+    
+    if (timeToSeconds(sortedChapters[0].startChapter) !== 0) {
+      showMessage('The very first timestamp on your list must be exactly 0:00.', 'error');
+      return;
+    }
+  }
 
   const $saveButton = $('#save-chapters');
   const originalText = $saveButton.text();
@@ -175,19 +190,17 @@ const searchVideo = async () => {
 };
 
 const initializeKeyboardNavigation = () => {
-  $(document).on('keydown', '.chapter-time, .chapter-title', function(e) {
+  $(document).on('keydown', '.chapter-time, .chapter-title', function (e) {
     if (e.key === 'Enter') {
       e.preventDefault();
       const currentRow = $(this).closest('.vcm-chapter-row');
-      const isLastRow = currentRow.is(':last-child');
-
-      if (isLastRow) {
+      if (currentRow.is(':last-child')) {
         $('#add-chapter').click();
         setTimeout(() => {
-          $('.vcm-chapter-row:last-child .chapter-time').focus();
+          $('.vcm-chapter-row:last-child .chapter-time').focus().select();
         }, 100);
       } else {
-        currentRow.next().find('.chapter-time').focus();
+        currentRow.next().find('.chapter-time').focus().select();
       }
     }
   });

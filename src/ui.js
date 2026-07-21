@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { timeToSeconds, secondsToTimeStr, isValidTimeFormat, isValidChapterTime } from './validation.js';
+import { timeToSeconds, secondsToTimeStr, isValidTimeFormat, isValidChapterTime, parseYouTubeTimeUrl } from './validation.js';
 import { getChapterTitlesAPI } from './api.js';
 
 export const clearAllErrors = () => {
@@ -37,9 +37,16 @@ export const showMessage = (message, type = 'info') => {
 
 export const initializeTimeInput = (input) => {
   $(input).on('blur', function() {
-    const currentTime = $(this).val().trim();
+    let currentTime = $(this).val().trim();
 
     if (!currentTime) return;
+    
+    // Check if the user pasted a YouTube link with a timestamp
+    const parsedUrlTime = parseYouTubeTimeUrl(currentTime);
+    if (parsedUrlTime) {
+      currentTime = parsedUrlTime;
+      $(this).val(currentTime);
+    }
 
     if (!isValidTimeFormat(currentTime)) {
       $(this).addClass('vcm-error');
@@ -60,7 +67,7 @@ export const initializeTimeInput = (input) => {
     if (!validation.valid) {
       $(this).addClass('vcm-error');
       showMessage(
-        `Chapters must be at least 60 seconds apart. This time is ${Math.floor(validation.difference)} seconds from the chapter at ${validation.conflictWith}`,
+        `Chapters must be at least 10 seconds apart. This time is ${Math.floor(validation.difference)} seconds from the chapter at ${validation.conflictWith}`,
         'error'
       );
     } else {
