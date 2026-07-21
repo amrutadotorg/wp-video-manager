@@ -49,7 +49,7 @@ class VideoChaptersManager {
 				'video-chapters-script',
 				plugin_dir_url( __FILE__ ) . 'dist/video-chapters.min.js',
 				array( 'jquery', 'jquery-ui-autocomplete' ),
-				'2.0.0',
+				'2.0.2',
 				true
 			);
 
@@ -66,7 +66,7 @@ class VideoChaptersManager {
 				'video-chapters-style',
 				plugin_dir_url( __FILE__ ) . 'dist/video-chapters.min.css',
 				array(),
-				'2.0.0'
+				'2.0.2'
 			);
 		}
 

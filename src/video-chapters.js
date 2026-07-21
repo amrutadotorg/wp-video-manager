@@ -16,7 +16,7 @@ const initializeApp = () => {
       </div>
       <div id="video-info"></div>
       <div id="chapters-container"></div>
-      <div class="vcm-actions">
+      <div class="vcm-actions" style="display: none;">
         <button class="button" id="add-chapter">Add Chapter</button>
         <button class="button button-primary" id="save-chapters">Save Chapters</button>
       </div>
@@ -126,6 +126,8 @@ const saveChapters = async () => {
 
 const searchVideo = async () => {
   clearAllErrors();
+  $('.vcm-actions').hide();
+  
   const input = $('#youtube-id').val().trim();
   const youtubeId = extractYouTubeId(input);
 
@@ -160,6 +162,8 @@ const searchVideo = async () => {
       parsedChapters.forEach(chapter => {
         $container.append(createChapterRow(chapter));
       });
+      
+      $('.vcm-actions').show();
     } else {
       throw new Error(response?.data || 'Video not found.');
     }
@@ -192,6 +196,13 @@ const initializeKeyboardNavigation = () => {
 (function ($) {
   $(document).ready(() => {
     initializeApp();
+
+    const params = new URLSearchParams(window.location.search);
+    const preloadId = params.get('video_id') || params.get('youtube_id');
+    if (preloadId) {
+      $('#youtube-id').val(preloadId);
+      $('#search-video').click();
+    }
 
     $(document).on('click', '.vcm-remove-btn', function () {
       $(this).closest('.vcm-chapter-row').remove();
