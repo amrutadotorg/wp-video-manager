@@ -85,7 +85,7 @@
 .vcm-remove-btn:hover {
   color: var(--color-error, #d63638) !important;
   border-color: var(--color-error, #d63638) !important;
-  background: var(--color-error, #d63638)1a !important;
+  background: rgba(214, 54, 56, 0.1) !important;
 }
 
 /* Error state */

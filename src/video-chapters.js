@@ -70,20 +70,21 @@ const createChapterRow = (chapter = {}) => {
       <div class="vcm-row-fields">
         <div class="vcm-field">
           <label for="">Start Time</label>
-          <input type="text" class="regular-text chapter-time" value="${timeStr}" placeholder="0:00">
+          <input type="text" class="regular-text chapter-time" placeholder="0:00">
         </div>
         <div class="vcm-field vcm-field-title">
           <label for="">Title</label>
-          <input type="text" class="regular-text chapter-title" value="${title}" placeholder="Chapter Title">
+          <input type="text" class="regular-text chapter-title" placeholder="Chapter Title">
         </div>
         <button type="button" class="button vcm-remove-btn" aria-label="Remove chapter">&times;</button>
       </div>
     </div>
   `);
 
+  row.find('.chapter-time').val(timeStr);
   initializeTimeInput(row.find('.chapter-time'));
 
-  const titleField = row.find('.chapter-title');
+  const titleField = row.find('.chapter-title').val(title);
   titleField.autocomplete({
     source: function(request, response) {
       $.ajax({
@@ -287,15 +288,16 @@ const searchVideo = async () => {
 
       parsedChapters = sortChapters(parsedChapters);
 
-      $('#video-info')
+      const $info = $('#video-info')
         .data('video-id', id)
-        .data('youtube-id', ytid)
-        .html(`
-          <div class="notice notice-info">
-            <p><strong>Title:</strong> ${title}</p>
-            <p><strong>URL:</strong> <a href="https://youtube.com/watch?v=${ytid}" target="_blank">View on YouTube</a></p>
-          </div>
-        `);
+        .data('youtube-id', ytid);
+
+      const $notice = $('<div class="notice notice-info"></div>');
+      $notice.append($('<p></p>').html('<strong>Title:</strong> ').append($('<span></span>').text(title)));
+      $notice.append($('<p></p>').html('<strong>URL:</strong> ').append(
+        $('<a></a>').attr('href', 'https://youtube.com/watch?v=' + ytid).attr('target', '_blank').text('View on YouTube')
+      ));
+      $info.append($notice);
 
       const $container = $('#chapters-container');
       $container.empty();
@@ -374,12 +376,14 @@ const showMessage = (message, type = 'info') => {
   const noticeClass = type === 'success' ? 'notice-success' : type === 'error' ? 'notice-error' : 'notice-info';
   const alert = $(`
     <div id="alert-message" class="notice ${noticeClass} is-dismissible">
-      <p>${message}</p>
+      <p></p>
       <button type="button" class="notice-dismiss" aria-label="Dismiss">
         <span class="screen-reader-text">Dismiss this notice.</span>
       </button>
     </div>`
   ).hide();
+
+  alert.find('p').text(message);
 
   $('#app').prepend(alert);
   alert.slideDown(200);
