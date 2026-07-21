@@ -48,7 +48,7 @@ Plugin korzysta z dwóch głównych tabel:
 - `wp_post_videos` - przechowuje powiązanie wideo (YouTube ID) z postem WordPress.
 - `wp_post_video_chapters` - przechowuje poszczególne rozdziały (czas startu, tytuł, kolejność).
 
-### 5. Główne pliki
+### 6. Główne pliki
 - `video-chapters-manager.php` - Logika PHP, hooki WordPress, obsługa AJAX.
 - `src/video-chapters.js` - Kod aplikacji frontendowej (jQuery + Autocomplete).
 - `src/video-chapters.css` - Style frontendu.

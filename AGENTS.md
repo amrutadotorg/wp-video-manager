@@ -15,7 +15,7 @@
 | Category | Technology |
 |---|---|
 | Backend | WordPress plugin (PHP), jQuery 4, AJAX |
-| Frontend | jQuery 4, jQuery UI Autocomplete, Bootstrap 5.3 |
+| Frontend | jQuery (WP-bundled), jQuery UI Autocomplete (WP-bundled), WP native classes |
 | Build Tool | Webpack 5.108 (ESM config) |
 | Language | JavaScript (ES modules, Babel 8 transpilation) |
 | Linting | ESLint 10 (flat config, `eslint.config.js`) |
@@ -113,8 +113,9 @@ git push
 
 ### CSS (src/video-chapters.css)
 
-- Scoped to `.chapter-row` and related selectors
-- Uses Bootstrap 5 utility classes for layout
+- Scoped to `.vcm-*` prefixed selectors
+- Uses WP CSS variables (`--wp-admin-theme-color`, `--border-color`, `--text-color`) for Dracula Dark Mode compatibility
+- No Bootstrap or external CSS dependencies
 
 ### PHP (video-chapters-manager.php)
 
@@ -136,8 +137,8 @@ git push
 
 ## Known Issues / Notes
 
-- **jQuery UI import**: Must use `jquery-ui-dist/jquery-ui.js` (with `.js` extension) due to ESM strict mode
-- **Bundle size warning**: `video-chapters.min.js` is ~497 KiB (jQuery UI is large). Consider lazy-loading if size becomes a problem
+- **jQuery UI from WordPress**: jQuery and jQuery UI are loaded from WordPress (not bundled). Webpack `externals` maps `jquery` to `window.jQuery`.
+- **Bundle size**: `video-chapters.min.js` is ~7 KiB (jQuery/jQuery UI excluded from bundle)
 - **No TypeScript** — pure JavaScript with Babel transpilation
 - **No unit tests** — verification is manual via lint + build + WordPress integration testing
 
