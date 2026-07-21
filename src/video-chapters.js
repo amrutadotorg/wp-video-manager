@@ -1,6 +1,4 @@
 import $ from 'jquery';
-import 'bootstrap';
-import 'jquery-ui-dist/jquery-ui.js'; // If jQuery UI must be used, keep this.
 import './video-chapters.css';
 
 const API = {
@@ -8,7 +6,6 @@ const API = {
   nonce: videoChapters?.nonce || '',
 };
 
-// Convert time string (HH:MM:SS or MM:SS) to seconds
 const timeToSeconds = (timeStr) => {
   const parts = timeStr.split(':').map(Number);
   if (parts.length === 3) {
@@ -19,7 +16,6 @@ const timeToSeconds = (timeStr) => {
   return 0;
 };
 
-// Convert seconds to time string (HH:MM:SS or MM:SS)
 const secondsToTimeStr = (seconds) => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
@@ -31,7 +27,6 @@ const secondsToTimeStr = (seconds) => {
   return `${minutes}:${String(secs).padStart(2, '0')}`;
 };
 
-// Sort chapters by time
 const sortChapters = (chapters) => {
   return chapters.sort((a, b) => {
     const timeA = timeToSeconds(a.startChapter);
@@ -40,7 +35,6 @@ const sortChapters = (chapters) => {
   });
 };
 
-// Validate time string format
 const isValidTimeFormat = (timeStr) =>
   /^\d{1,2}:\d{2}(:\d{2})?$/.test(timeStr) &&
   timeStr
@@ -48,13 +42,11 @@ const isValidTimeFormat = (timeStr) =>
     .reverse()
     .every((part, index) => (index === 0 || index === 1 ? parseInt(part) < 60 : true));
 
-// Clear all form errors and alerts
 const clearAllErrors = () => {
   $('#alert-message').remove();
-  $('.form-control').removeClass('is-invalid');
+  $('.chapter-time, .chapter-title').removeClass('vcm-error');
 };
 
-// Extract YouTube ID from input
 const extractYouTubeId = (input) => {
   const patterns = [
     /(?:https?:\/\/)?(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-_]*)/,
@@ -69,35 +61,28 @@ const extractYouTubeId = (input) => {
   return null;
 };
 
-// Create a single chapter row
 const createChapterRow = (chapter = {}) => {
   const timeStr = chapter.startChapter || '0:00';
   const title = chapter.title || '';
 
   const row = $(`
-    <div class="chapter-row mb-3">
-      <div class="row">
-        <div class="col-md-4">
-          <div class="form-group">
-            <label>Start Time</label>
-            <input type="text" class="form-control chapter-time" value="${timeStr}" placeholder="0:00">
-          </div>
+    <div class="vcm-chapter-row">
+      <div class="vcm-row-fields">
+        <div class="vcm-field">
+          <label for="">Start Time</label>
+          <input type="text" class="regular-text chapter-time" value="${timeStr}" placeholder="0:00">
         </div>
-        <div class="col-md-6">
-          <div class="form-group">
-            <label>Title</label>
-            <input type="text" class="form-control chapter-title" value="${title}" placeholder="Chapter Title">
-            <button type="button" class="btn btn-danger remove-chapter">×</button>
-          </div>
+        <div class="vcm-field vcm-field-title">
+          <label for="">Title</label>
+          <input type="text" class="regular-text chapter-title" value="${title}" placeholder="Chapter Title">
         </div>
+        <button type="button" class="button vcm-remove-btn" aria-label="Remove chapter">&times;</button>
       </div>
     </div>
   `);
 
-  // Initialize time input validation
   initializeTimeInput(row.find('.chapter-time'));
 
-  // Attach autocomplete to the title field
   const titleField = row.find('.chapter-title');
   titleField.autocomplete({
     source: function(request, response) {
@@ -123,82 +108,60 @@ const createChapterRow = (chapter = {}) => {
     },
     minLength: 1,
     delay: 300,
-    open: function() {
-      $(this).autocomplete('widget').css({
-        'max-height': '200px',
-        'overflow-y': 'auto',
-        'overflow-x': 'hidden',
-        'z-index': 1000
-      });
-    }
   });
 
   return row;
 };
 
-
-
-// Initialize the app
 const initializeApp = () => {
   const app = $('#app');
   app.html(`
-    <div class="container">
-      <h2>Video Chapters Manager</h2>
-      <div class="row mb-4">
-        <div class="col-md-12">
-          <div class="input-group">
-            <input type="text" id="youtube-id" class="form-control" placeholder="Enter YouTube (ID or link)">
-            <button class="btn btn-primary" id="search-video">Search</button>
-          </div>
-        </div>
+    <div class="vcm-wrap">
+      <h1 class="wp-heading-inline">Video Chapters Manager</h1>
+      <div class="vcm-search-row">
+        <input type="text" id="youtube-id" class="regular-text" placeholder="Enter YouTube ID or URL">
+        <button class="button button-primary" id="search-video">Search</button>
       </div>
-      <div id="video-info" class="my-4"></div>
-      <div class="row">
-        <div class="col-md-12">
-          <div id="chapters-container"></div>
-          <button class="btn btn-secondary mt-3" id="add-chapter">Add Chapter</button>
-          <button class="btn btn-success mt-3" id="save-chapters">Save Chapters</button>
-        </div>
+      <div id="video-info"></div>
+      <div id="chapters-container"></div>
+      <div class="vcm-actions">
+        <button class="button" id="add-chapter">Add Chapter</button>
+        <button class="button button-primary" id="save-chapters">Save Chapters</button>
       </div>
     </div>
   `);
-$('#youtube-id').focus();
-  // Initialize keyboard navigation
+
+  $('#youtube-id').focus();
   initializeKeyboardNavigation();
 
-$('#youtube-id').on('keypress', function(e) {
+  $('#youtube-id').on('keypress', function(e) {
     if (e.which === 13) {
       e.preventDefault();
       $('#search-video').click();
     }
   });
+
   $('#search-video').on('click', searchVideo);
-$('#add-chapter')
-  .off('click') // Remove any previously attached listeners
-  .on('click', () => {
-    const newChapterRow = createChapterRow();
-    $('#chapters-container').append(newChapterRow);
 
-    const timeField = newChapterRow.find('.chapter-time');
-    initializeTimeInput(timeField);
+  $('#add-chapter')
+    .off('click')
+    .on('click', () => {
+      const newChapterRow = createChapterRow();
+      $('#chapters-container').append(newChapterRow);
+      newChapterRow.find('.chapter-time').focus();
+    });
 
-    timeField.focus();
-  });
-
-
-  // Save chapters functionality
-  $('#save-chapters').on('click', saveChapters); // Bind save button to saveChapters function
+  $('#save-chapters').on('click', saveChapters);
 };
 
 const getTimeDifferenceInSeconds = (time1, time2) => {
   return Math.abs(timeToSeconds(time1) - timeToSeconds(time2));
 };
 
-// Validate new chapter time against existing chapters
 const isValidChapterTime = (newTime, existingChapters) => {
   for (const chapter of existingChapters) {
     const timeDifference = getTimeDifferenceInSeconds(newTime, chapter.startChapter);
-    
+
     if (timeDifference < 60) {
       return {
         valid: false,
@@ -207,10 +170,10 @@ const isValidChapterTime = (newTime, existingChapters) => {
       };
     }
   }
-  
+
   return { valid: true };
 };
-// Modified save chapters function with time validation
+
 const saveChapters = async () => {
   clearAllErrors();
 
@@ -218,32 +181,30 @@ const saveChapters = async () => {
   const youtubeId = $('#video-info').data('youtube-id');
 
   if (!videoId || !youtubeId) {
-    showMessage('Please search for a video first.', 'danger');
+    showMessage('Please search for a video first.', 'error');
     return;
   }
 
   const chapters = [];
   let hasErrors = false;
-  let timeErrors = [];
+  const timeErrors = [];
 
-  // Collect and validate chapters
-  $('.chapter-row').each(function(_index) {
+  $('.vcm-chapter-row').each(function() {
     const $row = $(this);
     const startTime = $row.find('.chapter-time').val().trim();
     const title = $row.find('.chapter-title').val().trim();
 
     if (!startTime || !title) {
       hasErrors = true;
-      if (!startTime) $row.find('.chapter-time').addClass('is-invalid');
-      if (!title) $row.find('.chapter-title').addClass('is-invalid');
+      if (!startTime) $row.find('.chapter-time').addClass('vcm-error');
+      if (!title) $row.find('.chapter-title').addClass('vcm-error');
       return;
     }
 
-    // Check time conflicts with existing chapters
     const validation = isValidChapterTime(startTime, chapters);
     if (!validation.valid) {
       hasErrors = true;
-      $row.find('.chapter-time').addClass('is-invalid');
+      $row.find('.chapter-time').addClass('vcm-error');
       timeErrors.push(`Chapter at ${startTime} is too close to chapter at ${validation.conflictWith} (${validation.difference} seconds apart)`);
       return;
     }
@@ -258,19 +219,17 @@ const saveChapters = async () => {
     } else {
       errorMessage = 'Please fill in all chapter fields.';
     }
-    showMessage(errorMessage, 'danger');
+    showMessage(errorMessage, 'error');
     return;
   }
 
-  // Sort chapters by time
   const sortedChapters = sortChapters(chapters);
 
   const $saveButton = $('#save-chapters');
   const originalText = $saveButton.text();
 
   try {
-    $saveButton.prop('disabled', true)
-              .html('<span class="spinner-border spinner-border-sm me-2"></span>Saving...');
+    $saveButton.prop('disabled', true).text('Saving\u2026');
 
     const response = await $.ajax({
       url: API.ajaxurl,
@@ -287,8 +246,7 @@ const saveChapters = async () => {
 
     if (response.success) {
       showMessage(`Successfully saved ${sortedChapters.length} chapters!`, 'success');
-      
-      // Update display with sorted chapters
+
       const $container = $('#chapters-container');
       $container.empty();
       sortedChapters.forEach(chapter => {
@@ -299,25 +257,24 @@ const saveChapters = async () => {
     }
   } catch (error) {
     const errorMessage = error.responseJSON?.data?.message || error.message || 'Failed to save chapters.';
-    showMessage(errorMessage, 'danger');
+    showMessage(errorMessage, 'error');
   } finally {
     $saveButton.prop('disabled', false).text(originalText);
   }
 };
 
-// Modify the search video function to display sorted chapters
 const searchVideo = async () => {
   clearAllErrors();
   const input = $('#youtube-id').val().trim();
   const youtubeId = extractYouTubeId(input);
 
   if (!youtubeId) {
-    showMessage('Invalid YouTube ID or URL.', 'danger');
+    showMessage('Invalid YouTube ID or URL.', 'error');
     return;
   }
 
   try {
-    $('#search-video').prop('disabled', true).text('Searching...');
+    $('#search-video').prop('disabled', true).text('Searching\u2026');
     const response = await $.post(API.ajaxurl, {
       action: 'search_video',
       nonce: API.nonce,
@@ -327,17 +284,16 @@ const searchVideo = async () => {
     if (response?.success) {
       const { id, title, ytid, chapters } = response.data;
       let parsedChapters = JSON.parse(chapters) || [];
-      
-      // Sort chapters by time when displaying
+
       parsedChapters = sortChapters(parsedChapters);
 
       $('#video-info')
         .data('video-id', id)
         .data('youtube-id', ytid)
         .html(`
-          <div class="alert alert-info">
-            <strong>Title:</strong> ${title}<br>
-            <strong>URL:</strong> <a href="https://youtube.com/watch?v=${ytid}" target="_blank">View</a>
+          <div class="notice notice-info">
+            <p><strong>Title:</strong> ${title}</p>
+            <p><strong>URL:</strong> <a href="https://youtube.com/watch?v=${ytid}" target="_blank">View on YouTube</a></p>
           </div>
         `);
 
@@ -350,33 +306,27 @@ const searchVideo = async () => {
       throw new Error(response?.data || 'Video not found.');
     }
   } catch (error) {
-    showMessage(error.message, 'danger');
+    showMessage(error.message, 'error');
   } finally {
     $('#search-video').prop('disabled', false).text('Search');
   }
 };
 
-
-
-
 const initializeTimeInput = (input) => {
-  const $input = $(input);
-  
-  $input.on('blur', function() {
-    const $row = $(this).closest('.chapter-row');
+  $(input).on('blur', function() {
+    const $row = $(this).closest('.vcm-chapter-row');
     const currentTime = $(this).val().trim();
-    
+
     if (!currentTime) return;
 
     if (!isValidTimeFormat(currentTime)) {
-      $(this).addClass('is-invalid');
-      showMessage('Invalid time format. Please use MM:SS or HH:MM:SS', 'danger');
+      $(this).addClass('vcm-error');
+      showMessage('Invalid time format. Please use MM:SS or HH:MM:SS', 'error');
       return;
     }
 
-    // Collect all other chapter times
     const otherChapters = [];
-    $('.chapter-row').not($row).each(function() {
+    $('.vcm-chapter-row').not($row).each(function() {
       const time = $(this).find('.chapter-time').val().trim();
       const title = $(this).find('.chapter-title').val().trim();
       if (time && title) {
@@ -384,19 +334,17 @@ const initializeTimeInput = (input) => {
       }
     });
 
-    // Validate time difference
     const validation = isValidChapterTime(currentTime, otherChapters);
     if (!validation.valid) {
-      $(this).addClass('is-invalid');
+      $(this).addClass('vcm-error');
       showMessage(
-        `Chapters must be at least 60 seconds apart. This time is ${Math.floor(validation.difference)} seconds from the chapter at ${validation.conflictWith}`, 
-        'danger'
+        `Chapters must be at least 60 seconds apart. This time is ${Math.floor(validation.difference)} seconds from the chapter at ${validation.conflictWith}`,
+        'error'
       );
     } else {
-      $(this).removeClass('is-invalid');
+      $(this).removeClass('vcm-error');
     }
 
-    // Format to consistent time string
     const seconds = timeToSeconds(currentTime);
     $(this).val(secondsToTimeStr(seconds));
   });
@@ -406,13 +354,13 @@ const initializeKeyboardNavigation = () => {
   $(document).on('keydown', '.chapter-time, .chapter-title', function(e) {
     if (e.key === 'Enter') {
       e.preventDefault();
-      const currentRow = $(this).closest('.chapter-row');
+      const currentRow = $(this).closest('.vcm-chapter-row');
       const isLastRow = currentRow.is(':last-child');
-      
+
       if (isLastRow) {
         $('#add-chapter').click();
         setTimeout(() => {
-          $('.chapter-row:last-child .chapter-time').focus();
+          $('.vcm-chapter-row:last-child .chapter-time').focus();
         }, 100);
       } else {
         currentRow.next().find('.chapter-time').focus();
@@ -420,35 +368,39 @@ const initializeKeyboardNavigation = () => {
     }
   });
 };
-// Show message alerts
+
 const showMessage = (message, type = 'info') => {
   $('#alert-message').remove();
+  const noticeClass = type === 'success' ? 'notice-success' : type === 'error' ? 'notice-error' : 'notice-info';
   const alert = $(`
-    <div id="alert-message" class="alert alert-${type} alert-dismissible fade show" role="alert">
-      ${message}
-      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    <div id="alert-message" class="notice ${noticeClass} is-dismissible">
+      <p>${message}</p>
+      <button type="button" class="notice-dismiss" aria-label="Dismiss">
+        <span class="screen-reader-text">Dismiss this notice.</span>
+      </button>
     </div>`
   ).hide();
 
   $('#app').prepend(alert);
-  alert.fadeIn(300);
+  alert.slideDown(200);
 
-  // Auto-dismiss success messages
+  alert.find('.notice-dismiss').on('click', function() {
+    alert.slideUp(200, function() { $(this).remove(); });
+  });
+
   if (type === 'success') {
     setTimeout(() => {
-      alert.fadeOut(300, function() {
-        $(this).remove();
-      });
-    }, 3000);
+      alert.slideUp(200, function() { $(this).remove(); });
+    }, 4000);
   }
 };
 
 (function ($) {
   $(document).ready(() => {
     initializeApp();
-    
-    $(document).on('click', '.remove-chapter', function () {
-      $(this).closest('.chapter-row').remove();
+
+    $(document).on('click', '.vcm-remove-btn', function () {
+      $(this).closest('.vcm-chapter-row').remove();
     });
   });
 })(jQuery);

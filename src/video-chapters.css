@@ -1,395 +1,137 @@
-/* Base Layout & Container */
-#video-chapter-manager-app {
-    max-width: 1000px;
-    margin: 20px auto;
-    padding: 30px;
-    background: #fff;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    color: #2d3748;
+/* Video Chapters Manager — WP Admin Native Styles */
+
+.vcm-wrap {
+  max-width: 1000px;
+  margin-top: 20px;
 }
 
-/* Typography */
-h1, h2, h3 {
-    color: #1a202c;
-    margin-bottom: 0.5rem;
-    font-weight: 600;
+/* Search row */
+.vcm-search-row {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0;
+  align-items: center;
 }
 
-label {
-    font-weight: 500;
-    color: #4a5568;
-    margin-bottom: 0.5rem;
-    display: block;
+.vcm-search-row .regular-text {
+  flex: 1;
 }
 
-/* Form Elements */
-.form-control {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    border: 2px solid #e2e8f0;
-    border-radius: 6px;
-    font-size: 1rem;
-    transition: all 0.2s ease;
-    background-color: #fff;
-}
-
-.form-control:focus {
-    border-color: #4299e1;
-    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
-    outline: none;
-}
-
-.form-control.is-invalid {
-    border-color: #e53e3e;
-    background-color: #fff5f5 !important; /* Light pink background */
-    color: #e53e3e !important; /* Red text color */
-    animation: shake 0.5s ease-in-out;
-}
-
-/* Add specific styles for the placeholder text */
-.form-control.is-invalid::placeholder {
-    color: #e53e3e99 !important; /* Semi-transparent red for placeholder */
-}
-
-/* When the invalid input is focused */
-.form-control.is-invalid:focus {
-    background-color: #fff !important; /* Pure white background when focused */
-    color: #2d3748 !important; /* Dark text for better readability */
-    border-color: #e53e3e;
-    box-shadow: 0 0 0 3px rgba(229, 62, 62, 0.25);
-}
-
-/* Buttons */
-.btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 6px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
-
-.btn:disabled {
-    cursor: not-allowed;
-    opacity: 0.7;
-}
-
-.btn-primary {
-    background-color: #4299e1;
-    color: #fff;
-    border: none;
-}
-
-.btn-primary:hover:not(:disabled) {
-    background-color: #3182ce;
-    transform: translateY(-1px);
-}
-
-.btn-danger {
-    background-color: #e53e3e;
-    color: #fff;
-    border: none;
-}
-
-.btn-danger:hover:not(:disabled) {
-    background-color: #c53030;
-}
-
-.btn-secondary {
-    background-color: #718096;
-    color: #fff;
-    border: none;
-}
-
-.btn-secondary:hover:not(:disabled) {
-    background-color: #4a5568;
-}
-
-/* Chapter Rows - Compact Style */
-.chapter-row {
-    background: #f7fafc;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 0.5rem; /* Slightly reduced padding */
-    margin-bottom: 0.25rem; /* Significantly reduced margin between rows */
-    transition: all 0.3s ease;
-}
-
-/* Hover effect for better row distinction */
-.chapter-row:hover {
-    transform: translateX(2px);
-    border-color: #cbd5e0;
-    background: #fff;
-}
-
-/* Add subtle separator between rows */
-.chapter-row + .chapter-row {
-    border-top: 1px solid #f0f0f0;
-}
-
-/* Adjust form groups for inline layout */
-.chapter-row .form-group {
-    margin-bottom: 0;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-}
-
-/* Adjust label styling */
-.chapter-row label {
-    font-size: 0.875rem;
-    margin-bottom: 0;
-    min-width: 70px;
-}
-
-/* Make inputs more compact */
-.chapter-row .form-control {
-    padding: 0.5rem 0.75rem;
-    height: 2.25rem;
-    font-size: 0.875rem;
-}
-
-/* Style remove button for inline layout */
-.chapter-row .btn-danger {
-    padding: 0.375rem 0.75rem;
-    font-size: 0.875rem;
-    height: 2.25rem;
-    margin-left: 0.5rem;
-    white-space: nowrap;
-    min-width: 44px;
-}
-
-/* Adjust column layout */
-.chapter-row .row {
-    align-items: center;
-    margin: 0;
-    gap: 0.5rem;
-}
-
-.chapter-row .col-md-4,
-.chapter-row .col-md-6 {
-    padding: 0 0.5rem;
-    display: flex;
-    align-items: center;
-}
-
-/* Remove the dedicated column for the button */
-.chapter-row .col-md-2 {
-    display: none;
-}
-
-/* Alert Messages */
-.alert {
-    padding: 1rem 1.5rem;
-    border-radius: 6px;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-}
-
-.alert-success {
-    background-color: #c6f6d5;
-    border: 1px solid #9ae6b4;
-    color: #22543d;
-}
-
-.alert-danger {
-    background-color: #fed7d7;
-    border: 1px solid #feb2b2;
-    color: #742a2a;
-}
-
-.alert-info {
-    background-color: #bee3f8;
-    border: 1px solid #90cdf4;
-    color: #2c5282;
-}
-
-/* Loading States */
-.spinner-border {
-    width: 1.2rem;
-    height: 1.2rem;
-    border-width: 0.2em;
-}
-
-/* Autocomplete Styling */
-.ui-autocomplete {
-    max-height: 200px;
-    overflow-y: auto;
-    overflow-x: hidden;
-    border-radius: 6px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e2e8f0;
-    background: #ffffff !important; /* Force white background */
-    padding: 0.5rem 0;
-    z-index: 1000;
-}
-
-.ui-menu-item {
-    padding: 0.75rem 1rem;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    color: #2d3748 !important; /* Force dark text color */
-}
-
-.ui-menu-item:hover {
-    background-color: #f7fafc !important;
-    color: #2d3748 !important;
-}
-
-.ui-menu .ui-menu-item-wrapper.ui-state-active {
-    background-color: #ebf8ff !important;
-    border: none;
-    color: #2b6cb0 !important;
-    margin: 0;
-}
-
-/* Style the autocomplete input when it's active */
-.ui-autocomplete-input:focus {
-    background-color: #ffffff;
-    color: #2d3748;
-}
-
-/* Video Info Section */
+/* Video info area */
 #video-info {
-    background: #f7fafc;
-    border-radius: 8px;
-    margin-bottom: 2rem;
+  margin: 16px 0;
 }
 
-#video-info .alert {
-    margin-bottom: 0;
+#video-info .notice {
+  margin: 0;
 }
 
-/* Animations */
-@keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-10px); }
-    75% { transform: translateX(10px); }
+/* Chapters container */
+#chapters-container {
+  margin: 16px 0;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to { opacity: 1; transform: translateY(0); }
+/* Chapter row */
+.vcm-chapter-row {
+  padding: 12px;
+  margin-bottom: 8px;
+  background: var(--wp-admin-theme-color, #fff);
+  border: 1px solid var(--border-color, #c3c4c7);
+  border-radius: 4px;
+  transition: border-color 0.2s;
 }
 
-.fade-in {
-    animation: fadeIn 0.3s ease-out;
+.vcm-chapter-row:hover {
+  border-color: var(--wp-admin-theme-color, #2271b1);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    #video-chapter-manager-app {
-        margin: 10px;
-        padding: 20px;
-    }
-
-    .chapter-row {
-        padding: 0.5rem;
-        margin-bottom: 0.5rem; /* Slightly more space on mobile for touch */
-    }
-
-    .row {
-        flex-direction: column;
-    }
-
-    .col-md-2, .col-md-4, .col-md-6 {
-        width: 100%;
-        margin-bottom: 1rem;
-    }
-
-    .btn {
-        width: 100%;
-        margin-bottom: 0.5rem;
-    }
-
-    /* Improve touch targets on mobile */
-    input, button, .ui-menu-item {
-        min-height: 44px;
-    }
-
-    .form-group {
-        margin-bottom: 1rem;
-    }
-
-    /* Adjust spacing for mobile */
-    .container {
-        padding: 0.5rem;
-    }
-
-    .mb-3 {
-        margin-bottom: 0.5rem !important;
-    }
-
-    /* Stack buttons vertically on mobile */
-    .btn-group {
-        flex-direction: column;
-        gap: 0.5rem;
-    }
-
-    /* Adjust form groups for mobile */
-    .chapter-row .form-group {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.25rem;
-    }
-
-    /* Adjust labels for mobile */
-    .chapter-row label {
-        min-width: unset;
-    }
-
-    /* Adjust remove button for mobile */
-    .chapter-row .btn-danger {
-        margin-top: 0.5rem;
-        margin-left: auto;
-    }
+.vcm-row-fields {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
 }
 
-/* Print Styles */
-@media print {
-    #video-chapter-manager-app {
-        box-shadow: none;
-        border: none;
-    }
-
-    .btn {
-        display: none;
-    }
-
-    .chapter-row {
-        break-inside: avoid;
-        border: 1px solid #000;
-    }
+.vcm-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
 }
 
-/* Accessibility Improvements */
-.btn:focus, 
-.form-control:focus {
-    outline: 2px solid #4299e1;
-    outline-offset: 2px;
+.vcm-field label {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text-color, #1d2327);
 }
 
-/* Use keyboard navigation */
-.btn:focus-visible,
-.form-control:focus-visible {
-    outline: 3px solid #4299e1;
-    outline-offset: 2px;
+.vcm-field-title {
+  flex: 1;
+  min-width: 200px;
 }
 
-/* High Contrast Mode Support */
-@media (forced-colors: active) {
-    .btn {
-        border: 2px solid currentColor;
-    }
-    
-    .chapter-row {
-        border: 2px solid currentColor;
-    }
+/* Remove button */
+.vcm-remove-btn {
+  height: 32px;
+  min-width: 32px;
+  padding: 0 8px !important;
+  font-size: 18px !important;
+  line-height: 1;
+  color: var(--text-color, #1d2327) !important;
+  background: none !important;
+  border: 1px solid transparent !important;
+  cursor: pointer;
+}
+
+.vcm-remove-btn:hover {
+  color: var(--color-error, #d63638) !important;
+  border-color: var(--color-error, #d63638) !important;
+  background: var(--color-error, #d63638)1a !important;
+}
+
+/* Error state */
+.vcm-error {
+  border-color: var(--color-error, #d63638) !important;
+  box-shadow: 0 0 0 1px var(--color-error, #d63638);
+}
+
+/* Actions row */
+.vcm-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color, #c3c4c7);
+}
+
+/* Spinner while saving */
+#save-chapters[disabled] {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Autocomplete */
+.ui-autocomplete {
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 160000 !important;
+}
+
+/* Responsive */
+@media (max-width: 782px) {
+  .vcm-row-fields {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .vcm-field-title {
+    min-width: unset;
+  }
+
+  .vcm-search-row {
+    flex-direction: column;
+  }
+
+  .vcm-actions {
+    flex-direction: column;
+  }
 }

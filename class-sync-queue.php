@@ -75,7 +75,9 @@ class Sync_Queue {
             if ($vimeo_id) {
                 $log_parts[] = "vimeoid=$vimeo_id";
             }
-            WP_CLI::log("Queued sync task: " . implode(', ', $log_parts));
+            if (defined('WP_CLI') && WP_CLI) {
+                WP_CLI::log("Queued sync task: " . implode(', ', $log_parts));
+            }
         } 
 
         return $result;

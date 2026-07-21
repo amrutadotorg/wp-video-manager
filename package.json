@@ -18,10 +18,5 @@
     "terser-webpack-plugin": "^5.6.1",
     "webpack": "^5.108.4",
     "webpack-cli": "^7.2.1"
-  },
-  "dependencies": {
-    "bootstrap": "^5.3.8",
-    "jquery": "^4.0.0",
-    "jquery-ui-dist": "^1.13.3"
   }
 }

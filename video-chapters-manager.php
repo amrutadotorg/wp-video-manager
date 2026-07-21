@@ -43,18 +43,15 @@ class VideoChaptersManager {
         if ('toplevel_page_video-chapters' !== $hook) {
             return;
         }
-        wp_enqueue_script('jquery'); // Enqueue jQuery
-        wp_enqueue_style('bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css');
-        wp_enqueue_script('bootstrap', 'https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js', [], null, true);
-        wp_enqueue_style('jquery-ui', 'https://code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css');
-        wp_enqueue_script('jquery-ui', 'https://code.jquery.com/ui/1.13.2/jquery-ui.min.js', ['jquery'], null, true);
-
+        wp_enqueue_script('jquery');
+        wp_enqueue_script('jquery-ui-autocomplete');
+        wp_enqueue_style('wp-jquery-ui-dialog');
 
         // Load Webpack-bundled JavaScript
         wp_enqueue_script(
             'video-chapters-script',
             plugin_dir_url(__FILE__) . 'dist/video-chapters.min.js',
-            ['jquery', 'jquery-ui'], // Add jQuery UI as a dependency
+            ['jquery', 'jquery-ui-autocomplete'],
             '2.0.0',
             true
         );
@@ -169,7 +166,6 @@ public function get_chapter_titles() {
 public function save_chapters() {
     try {
         global $wpdb;
-        $wpdb->show_errors(true);
 
         // 1. Verify nonce
         if (!check_ajax_referer('video-chapters-nonce', 'nonce', false)) {
@@ -178,7 +174,7 @@ public function save_chapters() {
 
         // 2. Get and validate inputs
         $post_id = filter_input(INPUT_POST, 'video_id', FILTER_VALIDATE_INT);
-        $youtube_id = filter_input(INPUT_POST, 'youtube_id', FILTER_SANITIZE_STRING);
+        $youtube_id = isset($_POST['youtube_id']) ? sanitize_text_field($_POST['youtube_id']) : '';
         
         // Allow empty chapters array
         $chapters = isset($_POST['chapters']) ? $_POST['chapters'] : [];
