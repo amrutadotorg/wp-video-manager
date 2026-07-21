@@ -12,9 +12,11 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 	class Video_Chapters_AJAX {
 
 		private $db;
+		private $access;
 
 		public function __construct() {
-			$this->db = Video_Chapters_DB::get_instance();
+			$this->db     = Video_Chapters_DB::get_instance();
+			$this->access = Video_Chapters_Access::get_instance();
 		}
 
 		/**
@@ -22,6 +24,10 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 		 */
 		public function get_chapter_titles() {
 			check_ajax_referer( 'video-chapters-nonce', 'nonce' );
+
+			if ( ! $this->access->user_has_access() ) {
+				wp_send_json_error( 'Insufficient permissions', 403 );
+			}
 
 			$term   = isset( $_POST['term'] ) ? sanitize_text_field( $_POST['term'] ) : '';
 			$titles = $this->db->get_chapter_titles( $term );
@@ -35,7 +41,7 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 		public function search_video() {
 			check_ajax_referer( 'video-chapters-nonce', 'nonce' );
 
-			if ( ! current_user_can( 'edit_posts' ) ) {
+			if ( ! $this->access->user_has_access() ) {
 				wp_send_json_error( 'Insufficient permissions', 403 );
 			}
 
@@ -62,12 +68,14 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 		 * AJAX: Save chapters for a video.
 		 */
 		public function save_chapters() {
+			global $wpdb;
+
 			try {
 				if ( ! check_ajax_referer( 'video-chapters-nonce', 'nonce', false ) ) {
 					throw new Exception( 'Security verification failed' );
 				}
 
-				if ( ! current_user_can( 'edit_posts' ) ) {
+				if ( ! $this->access->user_has_access() ) {
 					wp_send_json_error( array( 'message' => 'Insufficient permissions' ), 403 );
 				}
 
@@ -88,8 +96,7 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 				}
 
 				$validated_chapters = $this->validate_chapters( $chapters );
-
-				$internal_id = $this->db->get_internal_id( $youtube_id, $post_id );
+				$internal_id        = $this->db->get_internal_id( $youtube_id, $post_id );
 
 				if ( ! $internal_id ) {
 					throw new Exception( "Internal video record not found for YouTube ID $youtube_id" );
@@ -111,10 +118,8 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 						'chapter_count' => $count,
 					)
 				);
-
 			} catch ( Exception $e ) {
-				$this->log_error( $e );
-
+				$this->log_error( $e, $post_id ?? null, $youtube_id ?? null );
 				wp_send_json_error(
 					array(
 						'message' => $e->getMessage(),
@@ -126,6 +131,91 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 					)
 				);
 			}
+		}
+
+		/**
+		 * AJAX: Search WP users, to help pick who to add to the allowed-users list.
+		 * Restricted to manage_options — only admins manage the whitelist.
+		 */
+		public function search_users() {
+			check_ajax_referer( 'video-chapters-users-nonce', 'nonce' );
+
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_send_json_error( 'Insufficient permissions', 403 );
+			}
+
+			$term = isset( $_POST['term'] ) ? sanitize_text_field( $_POST['term'] ) : '';
+
+			if ( '' === $term ) {
+				wp_send_json_success( array() );
+			}
+
+			$allowed = $this->access->get_allowed_users();
+			$args    = array(
+				'search'         => '*' . esc_attr( $term ) . '*',
+				'search_columns' => array( 'user_login', 'user_email', 'display_name' ),
+				'number'         => 20,
+				'role__not_in'   => array( 'administrator' ),
+			);
+			if ( ! empty( $allowed ) ) {
+				$args['exclude'] = $allowed;
+			}
+			$query = new WP_User_Query( $args );
+
+			$results = array();
+
+			foreach ( $query->get_results() as $user ) {
+				$results[] = array(
+					'id'    => $user->ID,
+					'label' => sprintf( '%s (%s)', $user->display_name, $user->user_login ),
+					'email' => $user->user_email,
+				);
+			}
+
+			wp_send_json_success( $results );
+		}
+
+		/**
+		 * AJAX: Add or remove a user from the allowed-users list.
+		 * Restricted to manage_options — someone on the list can never edit it.
+		 */
+		public function save_allowed_users() {
+			check_ajax_referer( 'video-chapters-users-nonce', 'nonce' );
+
+			if ( ! current_user_can( 'manage_options' ) ) {
+				wp_send_json_error( 'Insufficient permissions', 403 );
+			}
+
+			$action_type = isset( $_POST['user_action'] ) ? sanitize_text_field( $_POST['user_action'] ) : '';
+			$user_id     = isset( $_POST['user_id'] ) ? absint( $_POST['user_id'] ) : 0;
+
+			if ( ! $user_id ) {
+				wp_send_json_error( 'Missing user_id' );
+			}
+
+			if ( 'add' === $action_type ) {
+				$result = $this->access->add_user( $user_id );
+
+				if ( is_wp_error( $result ) ) {
+					wp_send_json_error( $result->get_error_message() );
+				}
+			} elseif ( 'remove' === $action_type ) {
+				$this->access->remove_user( $user_id );
+			} else {
+				wp_send_json_error( 'Unknown action' );
+			}
+
+			$user = get_userdata( $user_id );
+
+			wp_send_json_success(
+				array(
+					'user_id'      => $user_id,
+					'display_name' => $user ? esc_html( $user->display_name ) : '',
+					'user_login'   => $user ? esc_html( $user->user_login ) : '',
+					'user_email'   => $user ? esc_html( $user->user_email ) : '',
+					'action'       => $action_type,
+				)
+			);
 		}
 
 		/**
@@ -150,7 +240,7 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 		/**
 		 * Log error with context.
 		 */
-		private function log_error( Exception $e ) {
+		private function log_error( Exception $e, $post_id = null, $youtube_id = null ) {
 			global $wpdb;
 
 			error_log( 'Video Chapters Manager Error: ' . $e->getMessage() );
