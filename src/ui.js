@@ -93,6 +93,7 @@ export const createChapterRow = (chapter = {}) => {
         <div class="vcm-field vcm-field-title">
           <label for="">Title</label>
           <input type="text" class="regular-text chapter-title" placeholder="Chapter Title">
+          <span class="description vcm-title-hint">Type 3+ characters to see title suggestions.</span>
         </div>
         <button type="button" class="button vcm-remove-btn" aria-label="Remove chapter">&times;</button>
       </div>
@@ -142,6 +143,12 @@ export const createChapterRow = (chapter = {}) => {
       .append($('<div>').text(item.label))
       .appendTo(ul);
   };
+
+  const hint = row.find('.vcm-title-hint');
+  titleField.on('input', function() {
+    hint.toggle($(this).val().length === 0);
+  });
+  hint.toggle(title.length === 0);
 
   return row;
 };
