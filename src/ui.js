@@ -120,7 +120,7 @@ export const createChapterRow = (chapter = {}) => {
 
           if (!exactMatch && term.length >= 3) {
             items.push({
-              label: `+ Dodaj nowy tytuł: „${term}"`,
+              label: `+ Add new title: "${term}"`,
               value: term,
               isNew: true,
             });
