@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<ruleset name="Video Chapters Manager">
+    <description>PHPCS rules for Video Chapters Manager plugin</description>
+
+    <!-- What to scan -->
+    <file>.</file>
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/node_modules/*</exclude-pattern>
+    <exclude-pattern>*/dist/*</exclude-pattern>
+    <exclude-pattern>video-chapters.bundle.asset.php</exclude-pattern>
+
+    <!-- Rules -->
+    <rule ref="WordPress-Extra">
+        <!-- Allow short array syntax -->
+        <exclude name="Generic.Arrays.DisallowShortArraySyntax"/>
+        <!-- Main plugin file doesn't follow class-file naming convention -->
+        <exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+        <!-- error_log is intentional in this plugin for debugging -->
+        <exclude name="WordPress.PHP.DevelopmentFunctions.error_log_error_log"/>
+        <exclude name="WordPress.PHP.DevelopmentFunctions.error_log_print_r"/>
+    </rule>
+
+    <!-- Check for WP cross-version compatibility -->
+    <config name="testVersion" value="8.0-"/>
+
+    <!-- Set minimum WP version -->
+    <config name="minimum_wp_version" value="6.0"/>
+
+    <arg name="extensions" value="php"/>
+    <arg value="sp"/>
+</ruleset>

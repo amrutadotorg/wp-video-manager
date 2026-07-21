@@ -1,0 +1,20 @@
+{
+    "name": "amrutadotorg/video-chapters-manager",
+    "description": "WordPress plugin for managing video chapters",
+    "type": "wordpress-plugin",
+    "require-dev": {
+        "wp-coding-standards/wpcs": "^3.1",
+        "dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+        "phpcompatibility/phpcompatibility-wp": "^2.1",
+        "yoast/phpunit-polyfills": "^2.0"
+    },
+    "scripts": {
+        "lint": "phpcs",
+        "lint:fix": "phpcbf"
+    },
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}

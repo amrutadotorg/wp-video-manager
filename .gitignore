@@ -1,5 +1,7 @@
 node_modules/
 dist/
+vendor/
+composer.lock
 .DS_Store
 *.log
 npm-debug.log*
