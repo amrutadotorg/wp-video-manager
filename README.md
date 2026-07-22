@@ -39,6 +39,15 @@ npm run lint          # ESLint — sprawdź błędy JS
 npm run lint:fix      # ESLint — automatyczna naprawa
 npm run php:lint      # PHPCS — sprawdź błędy PHP
 npm run php:lint:fix  # PHPCBF — automatyczna naprawa PHP
+npm test              # Vitest — testy jednostkowe funkcji walidacji
+npm run test:watch    # Vitest — tryb obserwacji zmian
+```
+
+### 4a. Testy PHP
+
+Testy walidacji backendu uruchamiaj w Dockerze, aby lokalny PHP nie był wymagany:
+```bash
+docker compose -f containers/video-manager-test/docker-compose.yml --profile test run --rm --no-deps phpunit
 ```
 
 Pre-commit hooks (Husky + lint-staged) automatycznie uruchamiają linting przed każdym commitem.

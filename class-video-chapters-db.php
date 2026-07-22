@@ -110,35 +110,47 @@ if ( ! class_exists( 'Video_Chapters_DB' ) ) {
 		public function save_chapters( $internal_id, $chapters ) {
 			global $wpdb;
 
-			$wpdb->query( 'START TRANSACTION' );
-
-			$wpdb->delete(
-				"{$wpdb->prefix}post_video_chapters",
-				array( 'video_id' => $internal_id )
-			);
-
-			$count = 0;
-			foreach ( $chapters as $index => $chapter ) {
-				$result = $wpdb->insert(
-					"{$wpdb->prefix}post_video_chapters",
-					array(
-						'video_id'   => $internal_id,
-						'start_time' => $chapter['startChapter'],
-						'title'      => $chapter['title'],
-						'sort_order' => $index + 1,
-					)
-				);
-
-				if ( false === $result ) {
-					$wpdb->query( 'ROLLBACK' );
-					throw new Exception( 'Failed to insert chapter: ' . esc_html( $wpdb->last_error ) );
-				}
-				++$count;
+			if ( false === $wpdb->query( 'START TRANSACTION' ) ) {
+				throw new Exception( 'Failed to start chapter save transaction: ' . esc_html( $wpdb->last_error ) );
 			}
 
-			$wpdb->query( 'COMMIT' );
+			try {
+				if (
+					false === $wpdb->delete(
+						"{$wpdb->prefix}post_video_chapters",
+						array( 'video_id' => $internal_id )
+					)
+				) {
+					throw new Exception( 'Failed to remove existing chapters: ' . esc_html( $wpdb->last_error ) );
+				}
 
-			return $count;
+				$count = 0;
+				foreach ( $chapters as $index => $chapter ) {
+					$result = $wpdb->insert(
+						"{$wpdb->prefix}post_video_chapters",
+						array(
+							'video_id'   => $internal_id,
+							'start_time' => $chapter['startChapter'],
+							'title'      => $chapter['title'],
+							'sort_order' => $index + 1,
+						)
+					);
+
+					if ( false === $result ) {
+						throw new Exception( 'Failed to insert chapter: ' . esc_html( $wpdb->last_error ) );
+					}
+					++$count;
+				}
+
+				if ( false === $wpdb->query( 'COMMIT' ) ) {
+					throw new Exception( 'Failed to commit chapter save transaction: ' . esc_html( $wpdb->last_error ) );
+				}
+
+				return $count;
+			} catch ( Exception $e ) {
+				$wpdb->query( 'ROLLBACK' );
+				throw $e;
+			}
 		}
 
 		/**

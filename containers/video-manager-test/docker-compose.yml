@@ -1,0 +1,74 @@
+# Video Chapters Manager — standalone test environment
+# Usage:
+#   cd ~/containers/video-manager-test
+#   docker compose up -d
+#   open http://localhost:8080/wp-admin/
+#
+# The plugin is bind-mounted from this repository. Set VCM_PLUGIN_PATH to use
+# another checkout.
+
+services:
+  wp:
+    image: wordpress:6.8-php8.4-apache
+    container_name: vcm_test_wp
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: vcm_test
+      WORDPRESS_DB_USER: vcm
+      WORDPRESS_DB_PASSWORD: vcm_test_pass
+      WORDPRESS_DEBUG: "1"
+    volumes:
+      - wp_data:/var/www/html
+      - ./wp-content:/var/www/html/wp-content
+      - ${VCM_PLUGIN_PATH:-../..}:/var/www/html/wp-content/plugins/video-manager-php
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: mysql:8.4
+    container_name: vcm_test_db
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: vcm_root_pass
+      MYSQL_DATABASE: vcm_test
+      MYSQL_USER: vcm
+      MYSQL_PASSWORD: vcm_test_pass
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  cli:
+    image: wordpress:cli
+    container_name: vcm_test_cli
+    volumes:
+      - wp_data:/var/www/html
+      - ./wp-content:/var/www/html/wp-content
+      - ${VCM_PLUGIN_PATH:-../..}:/var/www/html/wp-content/plugins/video-manager-php
+    environment:
+      WORDPRESS_DB_HOST: db
+      WORDPRESS_DB_NAME: vcm_test
+      WORDPRESS_DB_USER: vcm
+      WORDPRESS_DB_PASSWORD: vcm_test_pass
+    depends_on:
+      db:
+        condition: service_healthy
+
+  phpunit:
+    image: php:8.3-cli
+    profiles: ["test"]
+    working_dir: /plugin
+    volumes:
+      - ${VCM_PLUGIN_PATH:-../..}:/plugin:ro
+    command: ["./vendor/bin/phpunit", "--configuration", "phpunit.xml.dist"]
+
+volumes:
+  wp_data:
+  db_data:

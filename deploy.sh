@@ -16,7 +16,11 @@ if [ ! -d "$DEPLOY_DIR" ]; then
   exit 1
 fi
 
-# 1. Lint
+# 1. Test and lint
+echo "Running PHP unit tests..."
+docker compose -f containers/video-manager-test/docker-compose.yml --profile test run --rm --no-deps phpunit
+echo "Running unit tests..."
+npm test
 echo "Running ESLint..."
 npm run lint
 echo "Running PHPCS..."

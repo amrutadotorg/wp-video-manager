@@ -74,18 +74,18 @@ jQuery(document).ready(function ($) {
 
                     // Check if already in table to prevent duplicates visually
                     if ($usersTableBody.find('tr[data-user-id="' + user.user_id + '"]').length === 0) {
-                        const newRow = `
-                            <tr data-user-id="${user.user_id}">
-                                <td>${user.display_name} (${user.user_login})</td>
-                                <td>${user.user_email}</td>
-                                <td>
-                                    <button type="button" class="button vcu-remove-user" data-user-id="${user.user_id}">
-                                        Remove
-                                    </button>
-                                </td>
-                            </tr>
-                        `;
-                        $usersTableBody.append(newRow);
+                        const $newRow = $('<tr>', { 'data-user-id': user.user_id }).append(
+                            $('<td>').text(`${user.display_name} (${user.user_login})`),
+                            $('<td>').text(user.user_email),
+                            $('<td>').append(
+                                $('<button>', {
+                                    type: 'button',
+                                    class: 'button vcu-remove-user',
+                                    'data-user-id': user.user_id,
+                                }).text('Remove')
+                            )
+                        );
+                        $usersTableBody.append($newRow);
                     }
                     
                     // Reset search

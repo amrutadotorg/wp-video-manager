@@ -3,14 +3,18 @@
   "scripts": {
     "build": "webpack --mode production",
     "dev": "webpack --mode development --watch",
-    "lint": "eslint src/",
-    "lint:fix": "eslint src/ --fix",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/ tests/ admin-users.js",
+    "lint:fix": "eslint src/ tests/ admin-users.js --fix",
     "php:lint": "./vendor/bin/phpcs --standard=phpcs.xml",
     "php:lint:fix": "./vendor/bin/phpcbf --standard=phpcs.xml",
     "prepare": "husky"
   },
   "lint-staged": {
     "src/**/*.js": "eslint --fix",
+    "tests/**/*.js": "eslint --fix",
+    "admin-users.js": "eslint --fix",
     "**/*.php": "./vendor/bin/phpcs --standard=phpcs.xml"
   },
   "devDependencies": {
@@ -25,6 +29,7 @@
     "lint-staged": "^17.1.0",
     "mini-css-extract-plugin": "^2.10.2",
     "terser-webpack-plugin": "^5.6.1",
+    "vitest": "^4.1.10",
     "webpack": "^5.108.4",
     "webpack-cli": "^7.2.1"
   }

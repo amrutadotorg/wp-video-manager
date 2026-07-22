@@ -1,22 +1,33 @@
+# Development source and dependencies.
 src/
+tests/
+containers/
+.github/
 node_modules/
 vendor/
 .git/
 .husky/
+
+# Tooling and local configuration.
+deploy.sh
+eslint.config.js
+webpack.config.js
+phpunit.xml.dist
+package.json
+package-lock.json
+composer.json
+composer.lock
+phpcs.xml
+.gitignore
+.distignore
+
+# Documentation and local artifacts.
+*.md
 *.log
 *.map
-composer.lock
-package-lock.json
+list.txt
 .DS_Store
 .parcel-cache
 .cache
 .temp
 .tmp
-AGENTS.md
-AUDIT.md
-AUDIT_resp.md
-README.md
-eslint.config.js
-phpcs.xml
-list.txt
-admin-users.js
