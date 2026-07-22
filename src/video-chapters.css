@@ -116,6 +116,20 @@
   z-index: 160000 !important;
 }
 
+.ui-autocomplete .ui-menu-item {
+  padding: 0;
+  margin: 0;
+}
+
+.ui-autocomplete .ui-state-focus,
+.ui-autocomplete .ui-state-active {
+  margin: 0;
+  background: var(--wp-admin-theme-color, #2271b1);
+  color: #fff;
+  border: none;
+  font-weight: normal;
+}
+
 /* Autocomplete — existing and new title suggestions */
 .vcm-suggestion-existing {
   padding: 4px 8px;
