@@ -82,14 +82,15 @@ composer run lint        # Alternative PHPCS via composer
 
 ## Deploy (Local WordPress)
 
-Copy PHP files and compiled `dist/` folder:
+Run the deploy script:
 
 ```bash
-cp video-chapters-manager.php class-video-chapters-db.php class-ajax-handlers.php class-sync-queue.php ~/containers/amruta_wp/wp-content/plugins/video-manager-php/
-cp -r dist/ ~/containers/amruta_wp/wp-content/plugins/video-manager-php/
+./deploy.sh
 ```
 
-> Source files (`src/`, `package.json`, `webpack.config.js`, `vendor/`) are NOT needed in production.
+It builds (`npm run build`) and syncs all production files to `~/containers/amruta_wp/wp-content/plugins/video-manager-php/` via `rsync`. New files are copied automatically; removed files are deleted from the target.
+
+> Source files (`src/`, `node_modules/`, `vendor/`, `webpack.config.js`) are excluded from deploy.
 
 ## Database Schema
 
