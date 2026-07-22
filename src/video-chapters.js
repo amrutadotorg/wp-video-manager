@@ -22,7 +22,7 @@ const initializeApp = () => {
         <button class="button" id="add-chapter">Add Chapter</button>
         <button class="button button-primary" id="save-chapters">Save Chapters</button>
         <span style="margin-left: 15px; color: #646970; font-size: 13px;">
-          💡 <strong>Tip:</strong> Pause the video at the desired moment, then click <em>Add Chapter</em> — the start time will be set automatically. See <a href="https://youtu.be/wrBzUdLz-Zw?t=41" target="_blank" rel="noopener">tutorial</a>.
+          💡 <strong>Tip:</strong> Pause the video at the desired moment, then click <em>Add Chapter</em> — the start time will be set automatically.
         </span>
       </div>
     </div>
@@ -51,6 +51,24 @@ const initializeApp = () => {
           showMessage('Please fill in the current chapter before adding a new one.', 'error');
           if (!lastTime) $lastRow.find('.chapter-time').addClass('vcm-error');
           if (!lastTitle) $lastRow.find('.vcm-title-widget').addClass('vcm-error');
+          return;
+        }
+
+        const currentTime = (ytPlayer && ytPlayer.getCurrentTime)
+          ? secondsToTimeStr(Math.floor(ytPlayer.getCurrentTime()))
+          : lastTime;
+        const existingChapters = [];
+        $('.vcm-chapter-row').each(function () {
+          const t = $(this).find('.chapter-time').val().trim();
+          const ti = $(this).find('.chapter-title').val().trim();
+          if (t && ti) existingChapters.push({ startChapter: t, title: ti });
+        });
+        const validation = isValidChapterTime(currentTime, existingChapters);
+        if (!validation.valid) {
+          showMessage(
+            `Cannot add chapter at ${currentTime} — must be at least 10 seconds from the chapter at ${validation.conflictWith} (${validation.difference}s apart).`,
+            'error'
+          );
           return;
         }
       }
