@@ -134,9 +134,11 @@ const attachTitleWidget = (row, initialTitle) => {
   // Autocomplete on the search input
   searchInput.autocomplete({
     source: function(request, response) {
+      searchInput.addClass('vcm-ac-loading');
       const term = request.term.trim();
       getChapterTitlesAPI(term).then(
         (data) => {
+          searchInput.removeClass('vcm-ac-loading');
           const existing = Array.isArray(data) ? data.slice(0, 10) : [];
           const lowerTerm = term.toLowerCase();
           const exactMatch = existing.some(
@@ -152,7 +154,10 @@ const attachTitleWidget = (row, initialTitle) => {
           }
           response(items);
         },
-        () => response([])
+        () => {
+          searchInput.removeClass('vcm-ac-loading');
+          response([]);
+        }
       );
     },
     minLength: 3,
