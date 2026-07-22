@@ -41,6 +41,17 @@ const initializeApp = () => {
   $('#add-chapter')
     .off('click')
     .on('click', () => {
+      const $lastRow = $('.vcm-chapter-row:last');
+      if ($lastRow.length) {
+        const lastTitle = $lastRow.find('.chapter-title').val().trim();
+        const lastTime = $lastRow.find('.chapter-time').val().trim();
+        if (!lastTitle || !lastTime) {
+          showMessage('Please fill in the current chapter before adding a new one.', 'error');
+          if (!lastTime) $lastRow.find('.chapter-time').addClass('vcm-error');
+          if (!lastTitle) $lastRow.find('.vcm-title-widget').addClass('vcm-error');
+          return;
+        }
+      }
       const newChapterRow = createChapterRow();
       $('#chapters-container').append(newChapterRow);
       setFirstChapterLock();
@@ -229,8 +240,10 @@ const updateChapterCounter = () => {
   const $c = $('#chapter-counter');
   if (count < minRequired) {
     $c.css('color', '#d63638').text(`Chapters: ${count} / ${minRequired} minimum`);
+    $('#save-chapters').prop('disabled', true);
   } else {
     $c.css('color', '#646970').text(`Chapters: ${count}`);
+    $('#save-chapters').prop('disabled', false);
   }
 };
 
