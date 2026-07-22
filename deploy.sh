@@ -16,11 +16,17 @@ if [ ! -d "$DEPLOY_DIR" ]; then
   exit 1
 fi
 
-# 1. Build
+# 1. Lint
+echo "Running ESLint..."
+npm run lint
+echo "Running PHPCS..."
+npm run php:lint
+
+# 2. Build
 echo "Building..."
 npm run build
 
-# 2. Sync production files
+# 3. Sync production files
 echo "Deploying to $DEPLOY_DIR..."
 rsync -av --delete ${DRY_RUN} \
   --exclude-from='.distignore' \
