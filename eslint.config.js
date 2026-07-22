@@ -20,7 +20,6 @@ export default [
         URLSearchParams: 'readonly',
         FormData: 'readonly',
         fetch: 'readonly',
-        navigator: 'readonly',
         Promise: 'readonly',
       },
     },

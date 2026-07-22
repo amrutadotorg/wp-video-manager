@@ -212,7 +212,6 @@ export const createChapterRow = (chapter = {}) => {
           <span class="description vcm-title-hint">Type 3+ characters to see title suggestions.</span>
         </div>
         <div class="vcm-row-actions">
-          <button type="button" class="button vcm-copy-btn" aria-label="Copy link to this chapter" title="Copy link to this chapter"><span class="dashicons dashicons-admin-links"></span></button>
           <button type="button" class="button vcm-remove-btn" aria-label="Remove chapter" title="Remove chapter"><span class="dashicons dashicons-trash"></span></button>
         </div>
       </div>

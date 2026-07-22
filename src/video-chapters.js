@@ -22,7 +22,7 @@ const initializeApp = () => {
         <button class="button" id="add-chapter">Add Chapter</button>
         <button class="button button-primary" id="save-chapters">Save Chapters</button>
         <span style="margin-left: 15px; color: #646970; font-size: 13px;">
-          💡 <strong>Tip:</strong> You can paste a YouTube URL with a timestamp (e.g., <code>?t=123</code>) directly into any <em>Start Time</em> field. See <a href="https://youtu.be/wrBzUdLz-Zw?t=41" target="_blank" rel="noopener">tutorial</a> for more details.
+          💡 <strong>Tip:</strong> Pause the video at the desired moment, then click <em>Add Chapter</em> — the start time will be set automatically. See <a href="https://youtu.be/wrBzUdLz-Zw?t=41" target="_blank" rel="noopener">tutorial</a>.
         </span>
       </div>
     </div>
@@ -253,13 +253,9 @@ const setFirstChapterLock = () => {
       $time.val('0:00').prop('disabled', true).addClass('vcm-locked')
         .attr('title', 'First chapter must always start at 0:00');
       $field.append('<span class="vcm-locked-hint">First chapter is always 0:00</span>');
-      $(this).find('.vcm-copy-btn').prop('disabled', true).addClass('vcm-locked')
-        .attr('title', 'First chapter (0:00) link is always the same');
     } else {
       $time.prop('disabled', false).removeClass('vcm-locked')
         .removeAttr('title');
-      $(this).find('.vcm-copy-btn').prop('disabled', false).removeClass('vcm-locked')
-        .attr('title', 'Copy link to this chapter');
     }
   });
 };
@@ -323,38 +319,6 @@ const initializeKeyboardNavigation = () => {
       $(this).closest('.vcm-chapter-row').remove();
       setFirstChapterLock();
       updateChapterCounter();
-    });
-
-    $(document).on('mousedown', '.vcm-copy-btn', function (e) {
-      e.preventDefault();
-
-      const youtubeId = $('#video-info').data('youtube-id');
-      if (!youtubeId) return;
-
-      let seconds = 0;
-      if (ytPlayer && ytPlayer.getCurrentTime) {
-        seconds = Math.floor(ytPlayer.getCurrentTime());
-      } else {
-        const $row = $(this).closest('.vcm-chapter-row');
-        const timeStr = $row.find('.chapter-time').val().trim();
-        if (timeStr) {
-          const parts = timeStr.split(':').map(Number);
-          if (parts.length === 3) {
-            seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
-          } else {
-            seconds = parts[0] * 60 + parts[1];
-          }
-        }
-      }
-
-      const url = 'https://youtu.be/' + youtubeId + '?t=' + seconds;
-      navigator.clipboard.writeText(url).then(() => {
-        const $btn = $(this);
-        $btn.find('.dashicons').removeClass('dashicons-admin-links').addClass('dashicons-yes');
-        setTimeout(() => $btn.find('.dashicons').removeClass('dashicons-yes').addClass('dashicons-admin-links'), 1500);
-      }).catch(() => {
-        showMessage('Failed to copy link. Please copy manually: ' + url, 'error');
-      });
     });
   });
 })(jQuery);

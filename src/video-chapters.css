@@ -89,43 +89,11 @@
   min-width: 200px;
 }
 
-/* Remove button */
+/* Actions row */
 .vcm-row-actions {
   display: flex;
   gap: 4px;
   align-items: flex-end;
-}
-
-.vcm-copy-btn {
-  height: 32px;
-  min-width: 32px;
-  padding: 0 8px !important;
-  font-size: 18px !important;
-  line-height: 1;
-  color: var(--text-color, #1d2327) !important;
-  background: none !important;
-  border: 1px solid transparent !important;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.vcm-copy-btn:hover {
-  color: var(--wp-admin-theme-color, #2271b1) !important;
-  border-color: var(--wp-admin-theme-color, #2271b1) !important;
-  background: rgba(34, 113, 177, 0.1) !important;
-}
-
-.vcm-copy-btn.vcm-locked {
-  color: #a7aaad !important;
-  cursor: not-allowed;
-}
-
-.vcm-copy-btn.vcm-locked:hover {
-  color: #a7aaad !important;
-  border-color: transparent !important;
-  background: none !important;
 }
 
 /* Remove button */
