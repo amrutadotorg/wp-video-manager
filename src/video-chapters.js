@@ -6,6 +6,7 @@ import { searchVideoAPI, saveChaptersAPI } from './api.js';
 import { createChapterRow, showMessage, clearAllErrors } from './ui.js';
 
 let ytPlayer = null;
+window.originalChaptersJSON = '[]';
 
 const initializeApp = () => {
   const app = $('#app');
@@ -82,6 +83,10 @@ const initializeApp = () => {
       newChapterRow.find('.vcm-title-search').focus();
     });
 
+  $('#chapters-container').on('input change', '.chapter-time, .chapter-title, .vcm-title-search', function() {
+    updateChapterCounter();
+  });
+
   $('#save-chapters').on('click', saveChapters);
 };
 
@@ -157,13 +162,14 @@ const saveChapters = async () => {
     const response = await saveChaptersAPI(videoId, youtubeId, sortedChapters);
 
     if (response.success) {
-      showMessage(`Successfully saved ${sortedChapters.length} chapters!`, 'success');
+      showMessage(`Successfully saved ${sortedChapters.length} chapters! The data has been queued and will appear on YouTube and Vimeo within 1 hour.`, 'success');
 
       const $container = $('#chapters-container');
       $container.empty();
       sortedChapters.forEach(chapter => {
         $container.append(createChapterRow(chapter));
       });
+      window.originalChaptersJSON = JSON.stringify(sortedChapters);
       setFirstChapterLock();
       updateChapterCounter();
     } else {
@@ -206,6 +212,10 @@ const searchVideo = async () => {
       let parsedChapters = JSON.parse(chapters) || [];
 
       parsedChapters = sortChapters(parsedChapters);
+      
+      if (parsedChapters.length > 0 && timeToSeconds(parsedChapters[0].startChapter) !== 0) {
+        parsedChapters.unshift({ startChapter: '0:00', title: '' });
+      }
 
       const $info = $('#video-info')
         .data('video-id', id)
@@ -246,6 +256,14 @@ const searchVideo = async () => {
       if (parsedChapters.length === 0) {
         $container.append(createChapterRow());
       }
+      
+      const currentChapters = [];
+      $('.vcm-chapter-row').each(function() {
+        const t = $(this).find('.chapter-time').val().trim();
+        const ti = $(this).find('.chapter-title').val().trim();
+        currentChapters.push({ startChapter: t, title: ti });
+      });
+      window.originalChaptersJSON = JSON.stringify(currentChapters);
 
       setFirstChapterLock();
       updateChapterCounter();
@@ -288,8 +306,21 @@ const updateChapterCounter = () => {
   }
 
   const $c = $('#chapter-counter');
+
+  const currentChapters = [];
+  $('.vcm-chapter-row').each(function() {
+    const t = $(this).find('.chapter-time').val().trim();
+    const ti = $(this).find('.chapter-title').val().trim();
+    currentChapters.push({ startChapter: t, title: ti });
+  });
+  const currentJSON = JSON.stringify(currentChapters);
+  const isChanged = currentJSON !== window.originalChaptersJSON;
+
   if (count < minRequired) {
     $c.css('color', '#d63638').text(`Chapters: ${count} / ${minRequired} minimum`);
+    $('#save-chapters').prop('disabled', true);
+  } else if (!isChanged && window.originalChaptersJSON !== '[]') {
+    $c.css('color', '#646970').text(`Chapters: ${count}`);
     $('#save-chapters').prop('disabled', true);
   } else {
     $c.css('color', '#646970').text(`Chapters: ${count}`);

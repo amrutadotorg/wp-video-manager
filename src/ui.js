@@ -24,6 +24,10 @@ export const showMessage = (message, type = 'info') => {
 
   $('#app').prepend(alert);
   alert.slideDown(200);
+  
+  $('html, body').animate({
+    scrollTop: alert.offset().top - 50
+  }, 300);
 
   alert.find('.notice-dismiss').on('click', function() {
     alert.slideUp(200, function() { $(this).remove(); });
@@ -96,28 +100,59 @@ const attachTitleWidget = (row, initialTitle) => {
   /** Show a chip for the committed title and hide the search input */
   const commitTitle = (value) => {
     if (!value.trim()) return;
-    hidden.val(value.trim());
+    hidden.val(value.trim()).trigger('change');
     widget.removeClass('vcm-error');
 
-    // Build chip
+    // Build chip — inline styles survive Dracula Dark Mode overrides
     chipWrap.empty();
-    const chip = $('<span class="vcm-title-chip"></span>');
-    const label = $('<span class="vcm-title-chip-label"></span>').text(value.trim());
-    const removeBtn = $('<button type="button" class="vcm-title-chip-remove" aria-label="Remove title">&times;</button>');
+    const chip = $('<span class="vcm-title-chip"></span>').css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      gap: '4px',
+      padding: '2px 4px 2px 8px',
+      backgroundColor: '#2271b1',
+      color: '#ffffff',
+      borderRadius: '3px',
+      fontSize: '12px',
+      lineHeight: '1.4',
+      maxWidth: '100%',
+    });
+    const label = $('<span class="vcm-title-chip-label"></span>').text(value.trim()).css({
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      maxWidth: '260px',
+      color: '#ffffff',
+      backgroundColor: 'transparent',
+    });
+    const removeBtn = $('<button type="button" class="vcm-title-chip-remove" aria-label="Remove title">&times;</button>').css({
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'transparent',
+      border: 'none',
+      color: 'rgba(255,255,255,0.8)',
+      fontSize: '15px',
+      lineHeight: '1',
+      padding: '0 2px',
+      cursor: 'pointer',
+      borderRadius: '2px',
+    });
     chip.append(label).append(removeBtn);
-    chipWrap.append(chip).show();
+    // Append chip to wrap — DOM presence makes it visible (no .show() needed)
+    chipWrap.append(chip);
 
-    // Hide search area
-    searchWrap.hide();
-    hint.hide();
+    // Hide search area via inline style (not CSS class, to avoid specificity fights)
+    searchWrap.css('display', 'none');
+    hint.css('display', 'none');
 
     // Remove chip → restore search
     removeBtn.on('click', () => {
-      hidden.val('');
-      chipWrap.empty().hide();
-      searchInput.val('');
-      searchWrap.show();
-      hint.show();
+      hidden.val('').trigger('change');
+      chipWrap.empty(); // emptying the wrap hides it visually (no children = no size)
+      searchInput.val('').trigger('input');
+      searchWrap.css('display', '');
+      hint.css('display', '');
       searchInput.focus();
     });
   };
@@ -126,9 +161,9 @@ const attachTitleWidget = (row, initialTitle) => {
   if (initialTitle) {
     commitTitle(initialTitle);
   } else {
-    chipWrap.hide();
-    searchWrap.show();
-    hint.show();
+    // No initial title: chipWrap is empty (invisible), searchWrap visible
+    searchWrap.css('display', '');
+    hint.css('display', '');
   }
 
   // Autocomplete on the search input

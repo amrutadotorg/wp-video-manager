@@ -248,45 +248,70 @@
   box-shadow: 0 0 0 1px var(--color-error, #d63638);
 }
 
-/* Chip inside the widget */
+/* Chip inside the widget — hard colors to survive Dracula Dark Mode */
+.vcm-title-chip-wrap {
+  /* No display:none here — visibility controlled purely by DOM content (empty = hidden) */
+  line-height: 1;
+}
+
 .vcm-title-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 4px 2px 8px;
-  background: var(--wp-admin-theme-color, #2271b1);
-  color: #fff;
-  border-radius: 3px;
-  font-size: 12px;
-  line-height: 1.4;
-  max-width: 100%;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  padding: 2px 4px 2px 8px !important;
+  background-color: #2271b1 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  border-radius: 3px !important;
+  font-size: 12px !important;
+  line-height: 1.4 !important;
+  max-width: 100% !important;
+  border: none !important;
+}
+
+/* Override Dracula Dark Mode CSS variables at higher specificity */
+.vcm-title-widget .vcm-title-chip-wrap .vcm-title-chip,
+.vcm-title-widget .vcm-title-chip {
+  --dracula-background-2271b1: #2271b1 !important;
+  --dracula-text-ffffff: #ffffff !important;
+  --dracula-inline-bgcolor: #2271b1 !important;
+  --dracula-inline-color: #ffffff !important;
+  background-color: #2271b1 !important;
+  color: #ffffff !important;
 }
 
 .vcm-title-chip-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 260px;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  max-width: 260px !important;
+  color: #ffffff !important;
+  background: transparent !important;
+}
+
+.vcm-title-widget .vcm-title-chip-label {
+  --dracula-inline-color: #ffffff !important;
+  color: #ffffff !important;
 }
 
 .vcm-title-chip-remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: rgba(255, 255, 255, 0.8);
-  font-size: 15px;
-  line-height: 1;
-  padding: 0 2px;
-  cursor: pointer;
-  border-radius: 2px;
-  transition: color 0.1s, background 0.1s;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: none !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  font-size: 15px !important;
+  line-height: 1 !important;
+  padding: 0 2px !important;
+  cursor: pointer !important;
+  border-radius: 2px !important;
+  transition: color 0.1s, background 0.1s !important;
 }
 
 .vcm-title-chip-remove:hover {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.2);
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.2) !important;
 }
 
 /* Search input inside the widget — unstyled, fills remaining space */
@@ -309,9 +334,7 @@
   color: var(--text-color, #1d2327);
 }
 
-.vcm-title-chip-wrap {
-  display: none;  /* toggled via JS */
-}
+/* .vcm-title-chip-wrap moved above — with chip styles */
 
 /* Title hint — absolute so it never shifts layout */
 .vcm-title-hint {
