@@ -20,7 +20,7 @@ const initializeApp = () => {
         <button class="button" id="add-chapter">Add Chapter</button>
         <button class="button button-primary" id="save-chapters">Save Chapters</button>
         <span style="margin-left: 15px; color: #646970; font-size: 13px;">
-          💡 <strong>Tip:</strong> You can paste a YouTube URL with a timestamp (e.g., <code>?t=123</code>) directly into any <em>Start Time</em> field.
+          💡 <strong>Tip:</strong> You can paste a YouTube URL with a timestamp (e.g., <code>?t=123</code>) directly into any <em>Start Time</em> field. See <a href="https://youtu.be/wrBzUdLz-Zw?t=41" target="_blank" rel="noopener">tutorial</a> for more details.
         </span>
       </div>
     </div>
@@ -43,6 +43,7 @@ const initializeApp = () => {
     .on('click', () => {
       const newChapterRow = createChapterRow();
       $('#chapters-container').append(newChapterRow);
+      setFirstChapterLock();
       newChapterRow.find('.chapter-time').focus().select();
     });
 
@@ -128,6 +129,7 @@ const saveChapters = async () => {
       sortedChapters.forEach(chapter => {
         $container.append(createChapterRow(chapter));
       });
+      setFirstChapterLock();
     } else {
       throw new Error(response.data?.message || 'Unknown error occurred');
     }
@@ -178,6 +180,7 @@ const searchVideo = async () => {
         $container.append(createChapterRow(chapter));
       });
       
+      setFirstChapterLock();
       $('.vcm-actions').show();
     } else {
       throw new Error(response?.data || 'Video not found.');
@@ -187,6 +190,24 @@ const searchVideo = async () => {
   } finally {
     $('#search-video').prop('disabled', false).text('Search');
   }
+};
+
+const setFirstChapterLock = () => {
+  const $rows = $('.vcm-chapter-row');
+  $rows.each(function (i) {
+    const $time = $(this).find('.chapter-time');
+    const $field = $time.closest('.vcm-field');
+    $field.find('.vcm-locked-hint').remove();
+
+    if (i === 0) {
+      $time.val('0:00').prop('disabled', true).addClass('vcm-locked')
+        .attr('title', 'First chapter must always start at 0:00');
+      $field.append('<span class="vcm-locked-hint">First chapter is always 0:00</span>');
+    } else {
+      $time.prop('disabled', false).removeClass('vcm-locked')
+        .removeAttr('title');
+    }
+  });
 };
 
 const initializeKeyboardNavigation = () => {
@@ -227,6 +248,7 @@ const initializeKeyboardNavigation = () => {
 
     $(document).on('click', '.vcm-remove-btn', function () {
       $(this).closest('.vcm-chapter-row').remove();
+      setFirstChapterLock();
     });
   });
 })(jQuery);

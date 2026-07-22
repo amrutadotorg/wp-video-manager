@@ -34,11 +34,13 @@
 /* Chapter row */
 .vcm-chapter-row {
   padding: 12px;
+  padding-bottom: 28px;
   margin-bottom: 8px;
   background: var(--wp-admin-theme-color, #fff);
   border: 1px solid var(--border-color, #c3c4c7);
   border-radius: 4px;
   transition: border-color 0.2s;
+  position: relative;
 }
 
 .vcm-chapter-row:hover {
@@ -56,6 +58,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  position: relative;
 }
 
 .vcm-field label {
@@ -71,6 +74,9 @@
 
 /* Remove button */
 .vcm-remove-btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   height: 32px;
   min-width: 32px;
   padding: 0 8px !important;
@@ -92,6 +98,26 @@
 .vcm-error {
   border-color: var(--color-error, #d63638) !important;
   box-shadow: 0 0 0 1px var(--color-error, #d63638);
+}
+
+/* Locked first chapter time field */
+.chapter-time.vcm-locked {
+  background: #f0f0f1 !important;
+  color: #646970 !important;
+  cursor: not-allowed !important;
+  border-style: dashed !important;
+}
+
+/* Hint below locked field */
+.vcm-locked-hint {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 2px;
+  color: #646970;
+  font-size: 12px;
+  font-style: italic;
+  white-space: nowrap;
 }
 
 /* Actions row */
@@ -162,6 +188,7 @@
   box-sizing: border-box;
   cursor: text;
   transition: border-color 0.15s, box-shadow 0.15s;
+  position: relative;
 }
 
 .vcm-title-widget:focus-within {
@@ -237,6 +264,15 @@
 
 .vcm-title-chip-wrap {
   display: none;  /* toggled via JS */
+}
+
+/* Title hint — absolute so it never shifts layout */
+.vcm-title-hint {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 2px;
+  white-space: nowrap;
 }
 
 /* Responsive */
