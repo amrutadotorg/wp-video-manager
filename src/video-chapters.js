@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import './video-chapters.css';
 
-import { extractYouTubeId, sortChapters, isValidChapterTime, timeToSeconds } from './validation.js';
+import { extractYouTubeId, sortChapters, isValidChapterTime, timeToSeconds, secondsToTimeStr } from './validation.js';
 import { searchVideoAPI, saveChaptersAPI } from './api.js';
 import { createChapterRow, showMessage, clearAllErrors } from './ui.js';
 
@@ -54,7 +54,10 @@ const initializeApp = () => {
           return;
         }
       }
-      const newChapterRow = createChapterRow();
+      const currentTime = (ytPlayer && ytPlayer.getCurrentTime)
+        ? secondsToTimeStr(Math.floor(ytPlayer.getCurrentTime()))
+        : '0:00';
+      const newChapterRow = createChapterRow({ startChapter: currentTime });
       $('#chapters-container').append(newChapterRow);
       setFirstChapterLock();
       updateChapterCounter();
