@@ -19,7 +19,9 @@
         <exclude name="WordPress.PHP.DevelopmentFunctions.error_log_print_r"/>
     </rule>
 
-    <!-- Check for WP cross-version compatibility -->
+    <!-- Check PHP compatibility for the supported version range. -->
+    <rule ref="PHPCompatibilityWP"/>
+
     <config name="testVersion" value="8.0-"/>
 
     <!-- Set minimum WP version -->

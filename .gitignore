@@ -3,6 +3,7 @@ dist/
 vendor/
 .DS_Store
 *.log
+list.txt
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

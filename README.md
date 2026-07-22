@@ -23,14 +23,12 @@ Plugin korzysta z Webpacka do budowania plików w katalogu `dist/`.
     ```
 
 ### 3. Deploy flow (Local environment)
-Aby zaktualizować plugin w lokalnej instalacji WordPress (kontenerze), kopiujemy pliki PHP i skompilowany folder `dist/`:
+Aby zaktualizować plugin w lokalnej instalacji WordPress (kontenerze), uruchom:
 ```bash
-cp video-chapters-manager.php class-video-chapters-db.php class-ajax-handlers.php class-sync-queue.php ~/containers/amruta_wp/wp-content/plugins/video-manager-php/
-cp -r dist/ ~/containers/amruta_wp/wp-content/plugins/video-manager-php/
+./deploy.sh
 ```
 
-> [!TIP]
-> W docelowym folderze `plugins/video-manager-php/` **nie potrzebujesz** plików źródłowych (`src/`, `package.json`, `webpack.config.js`, `vendor/`). Możesz je bezpiecznie usunąć, aby zachować porządek.
+Skrypt uruchamia testy i lintery, buduje assety, a następnie synchronizuje wyłącznie pliki produkcyjne zgodnie z `.distignore`. Aby sprawdzić listę zmian bez ich kopiowania, użyj `./deploy.sh --dry-run`.
 
 ### 4. Linting
 Plugin korzysta z ESLint (JS) i PHPCS (PHP) do sprawdzania jakości kodu:
