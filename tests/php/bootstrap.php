@@ -18,6 +18,10 @@ function sanitize_text_field( $text ) {
 	return trim( strip_tags( $text ) );
 }
 
+function wp_generate_uuid4() {
+	return '123e4567-e89b-12d3-a456-426614174000';
+}
+
 require_once __DIR__ . '/class-sync-queue-test-database.php';
 require_once __DIR__ . '/class-video-chapters-db-test-database.php';
 require_once dirname( __DIR__, 2 ) . '/class-video-chapters-db.php';

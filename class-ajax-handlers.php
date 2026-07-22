@@ -147,16 +147,10 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 					)
 				);
 			} catch ( Exception $e ) {
-				$this->log_error( $e, $post_id ?? null, $youtube_id ?? null );
+				$error_id = $this->generate_error_id();
+				$this->log_error( $e, $post_id ?? null, $youtube_id ?? null, $error_id );
 				wp_send_json_error(
-					array(
-						'message' => $e->getMessage(),
-						'debug'   => WP_DEBUG ? array(
-							'db_error' => $wpdb->last_error ?? 'no error',
-							'db_query' => $wpdb->last_query ?? 'no query',
-							'trace'    => $e->getTraceAsString(),
-						) : null,
-					)
+					$this->build_safe_error_response( $error_id )
 				);
 			}
 		}
@@ -344,19 +338,48 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 		}
 
 		/**
-		 * Log error with context.
+		 * Create a non-sensitive error reference that can be matched to server logs.
+		 *
+		 * @return string Error reference.
 		 */
-		private function log_error( Exception $e, $post_id = null, $youtube_id = null ) {
+		private function generate_error_id() {
+			return 'vcm-' . wp_generate_uuid4();
+		}
+
+		/**
+		 * Build the error payload exposed to AJAX clients.
+		 *
+		 * @param string $error_id Error reference.
+		 * @return array<string, string> Safe error response data.
+		 */
+		private function build_safe_error_response( $error_id ) {
+			return array(
+				'message'  => sprintf( 'Unable to save chapters. Please contact an administrator and provide error reference %s.', $error_id ),
+				'error_id' => $error_id,
+			);
+		}
+
+		/**
+		 * Log error with context. Detailed diagnostics must never be sent to AJAX clients.
+		 *
+		 * @param Exception $e          Exception that was thrown.
+		 * @param int|null  $post_id    WordPress post ID, when available.
+		 * @param string|null $youtube_id YouTube ID, when available.
+		 * @param string     $error_id  Safe error reference sent to the client.
+		 */
+		private function log_error( Exception $e, $post_id = null, $youtube_id = null, $error_id = '' ) {
 			global $wpdb;
 
-			error_log( 'Video Chapters Manager Error: ' . $e->getMessage() );
+			error_log( "Video Chapters Manager Error [$error_id]: " . $e->getMessage() );
 			error_log(
 				'Error context: ' . print_r(
 					array(
+						'error_id'        => $error_id,
 						'post_id'         => $post_id ?? 'not set',
 						'youtube_id'      => $youtube_id ?? 'not set',
 						'wpdb_last_error' => $wpdb->last_error ?? 'no error',
 						'wpdb_last_query' => $wpdb->last_query ?? 'no query',
+						'exception_trace' => $e->getTraceAsString(),
 						'php_error'       => error_get_last(),
 					),
 					true

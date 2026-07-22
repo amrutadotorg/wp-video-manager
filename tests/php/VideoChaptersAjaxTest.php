@@ -198,6 +198,19 @@ class VideoChaptersAjaxTest extends TestCase {
 		$this->assertTrue( $this->call_private_method( 'is_valid_time_format', array( '1:02:03' ) ) );
 	}
 
+	public function test_safe_error_response_contains_no_exception_or_debug_data(): void {
+		$error_id = $this->call_private_method( 'generate_error_id', array() );
+		$response = $this->call_private_method( 'build_safe_error_response', array( $error_id ) );
+
+		$this->assertSame( 'vcm-123e4567-e89b-12d3-a456-426614174000', $error_id );
+		$this->assertSame( $error_id, $response['error_id'] );
+		$this->assertSame(
+			'Unable to save chapters. Please contact an administrator and provide error reference vcm-123e4567-e89b-12d3-a456-426614174000.',
+			$response['message']
+		);
+		$this->assertArrayNotHasKey( 'debug', $response );
+	}
+
 	private function call_private_method( $method_name, $arguments ) {
 		$method = new ReflectionMethod( 'Video_Chapters_AJAX', $method_name );
 
