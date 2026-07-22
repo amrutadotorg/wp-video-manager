@@ -185,9 +185,11 @@ const searchVideo = async () => {
 
       const $videoWrap = $('<div class="vcm-video-wrap"></div>');
       const $iframe = $('<iframe></iframe>')
-        .attr('src', 'https://www.youtube-nocookie.com/embed/' + ytid)
+        .attr('src', 'https://www.youtube.com/embed/' + ytid + '?rel=0&modestbranding=1')
+        .attr('title', title)
         .attr('frameborder', '0')
-        .attr('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture')
+        .attr('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share')
+        .attr('referrerpolicy', 'strict-origin-when-cross-origin')
         .attr('allowfullscreen', true);
       $videoWrap.append($iframe);
       $notice.append($videoWrap);
