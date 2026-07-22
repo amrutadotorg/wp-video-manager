@@ -79,7 +79,7 @@ const initializeApp = () => {
       $('#chapters-container').append(newChapterRow);
       setFirstChapterLock();
       updateChapterCounter();
-      newChapterRow.find('.chapter-time').focus().select();
+      newChapterRow.find('.vcm-title-search').focus();
     });
 
   $('#save-chapters').on('click', saveChapters);
