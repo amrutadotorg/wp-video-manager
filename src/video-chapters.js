@@ -5,6 +5,8 @@ import { extractYouTubeId, sortChapters, isValidChapterTime, timeToSeconds } fro
 import { searchVideoAPI, saveChaptersAPI } from './api.js';
 import { createChapterRow, showMessage, clearAllErrors } from './ui.js';
 
+let ytPlayer = null;
+
 const initializeApp = () => {
   const app = $('#app');
   app.html(`
@@ -154,9 +156,17 @@ const saveChapters = async () => {
   }
 };
 
+const initYTPlayer = () => {
+  if (ytPlayer) return;
+  ytPlayer = new window.YT.Player('vcm-youtube-player', {
+    events: {},
+  });
+};
+
 const searchVideo = async () => {
   clearAllErrors();
   $('.vcm-actions').hide();
+  ytPlayer = null;
   
   const input = $('#youtube-id').val().trim();
   const youtubeId = extractYouTubeId(input);
@@ -185,7 +195,8 @@ const searchVideo = async () => {
 
       const $videoWrap = $('<div class="vcm-video-wrap"></div>');
       const $iframe = $('<iframe></iframe>')
-        .attr('src', 'https://www.youtube.com/embed/' + ytid + '?rel=0&modestbranding=1')
+        .attr('id', 'vcm-youtube-player')
+        .attr('src', 'https://www.youtube.com/embed/' + ytid + '?enablejsapi=1&rel=0&modestbranding=1')
         .attr('title', title)
         .attr('frameborder', '0')
         .attr('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share')
@@ -193,6 +204,15 @@ const searchVideo = async () => {
         .attr('allowfullscreen', true);
       $videoWrap.append($iframe);
       $notice.append($videoWrap);
+
+      if (window.YT && window.YT.Player) {
+        initYTPlayer();
+      } else {
+        const tag = document.createElement('script');
+        tag.src = 'https://www.youtube.com/iframe_api';
+        document.head.appendChild(tag);
+        window.onYouTubeIframeAPIReady = initYTPlayer;
+      }
 
       $info.append($notice);
 
@@ -305,18 +325,23 @@ const initializeKeyboardNavigation = () => {
     $(document).on('mousedown', '.vcm-copy-btn', function (e) {
       e.preventDefault();
 
-      const $row = $(this).closest('.vcm-chapter-row');
-      const timeStr = $row.find('.chapter-time').val().trim();
       const youtubeId = $('#video-info').data('youtube-id');
+      if (!youtubeId) return;
 
-      if (!timeStr || !youtubeId) return;
-
-      const parts = timeStr.split(':').map(Number);
-      let seconds;
-      if (parts.length === 3) {
-        seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+      let seconds = 0;
+      if (ytPlayer && ytPlayer.getCurrentTime) {
+        seconds = Math.floor(ytPlayer.getCurrentTime());
       } else {
-        seconds = parts[0] * 60 + parts[1];
+        const $row = $(this).closest('.vcm-chapter-row');
+        const timeStr = $row.find('.chapter-time').val().trim();
+        if (timeStr) {
+          const parts = timeStr.split(':').map(Number);
+          if (parts.length === 3) {
+            seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+          } else {
+            seconds = parts[0] * 60 + parts[1];
+          }
+        }
       }
 
       const url = 'https://youtu.be/' + youtubeId + '?t=' + seconds;
