@@ -1,33 +1,8 @@
-# Development source and dependencies.
-src/
-tests/
-containers/
-.github/
-node_modules/
-vendor/
-.git/
-.husky/
-
-# Tooling and local configuration.
-deploy.sh
-eslint.config.js
-webpack.config.js
-phpunit.xml.dist
-package.json
-package-lock.json
-composer.json
-composer.lock
-phpcs.xml
-.gitignore
-.distignore
-
-# Documentation and local artifacts.
-*.md
-*.log
-*.map
-list.txt
-.DS_Store
-.parcel-cache
-.cache
-.temp
-.tmp
+# Production deployment allowlist for rsync.
+# Keep only plugin PHP files and compiled frontend assets. The final rule excludes
+# every other file or directory, including new development artifacts by default.
++ /dist/
++ /dist/*.js
++ /dist/*.css
++ /*.php
+- *

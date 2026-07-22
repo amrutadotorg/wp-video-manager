@@ -33,7 +33,7 @@ npm run build
 # 3. Sync production files
 echo "Deploying to $DEPLOY_DIR..."
 rsync -av --delete ${DRY_RUN} \
-  --exclude-from='.distignore' \
+  --filter='merge .distignore' \
   ./ "$DEPLOY_DIR/"
 
 echo "Deploy complete."
