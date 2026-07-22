@@ -44,6 +44,7 @@ const initializeApp = () => {
       const newChapterRow = createChapterRow();
       $('#chapters-container').append(newChapterRow);
       setFirstChapterLock();
+      updateChapterCounter();
       newChapterRow.find('.chapter-time').focus().select();
     });
 
@@ -130,6 +131,7 @@ const saveChapters = async () => {
         $container.append(createChapterRow(chapter));
       });
       setFirstChapterLock();
+      updateChapterCounter();
     } else {
       throw new Error(response.data?.message || 'Unknown error occurred');
     }
@@ -179,8 +181,13 @@ const searchVideo = async () => {
       parsedChapters.forEach(chapter => {
         $container.append(createChapterRow(chapter));
       });
-      
+
+      if (parsedChapters.length === 0) {
+        $container.append(createChapterRow());
+      }
+
       setFirstChapterLock();
+      updateChapterCounter();
       $('.vcm-actions').show();
     } else {
       throw new Error(response?.data || 'Video not found.');
@@ -208,6 +215,23 @@ const setFirstChapterLock = () => {
         .removeAttr('title');
     }
   });
+};
+
+const updateChapterCounter = () => {
+  const count = $('.vcm-chapter-row').length;
+  const minRequired = 3;
+  const $counter = $('#chapter-counter');
+
+  if ($counter.length === 0) {
+    $('.vcm-actions').prepend('<span id="chapter-counter" style="color: #646970; font-size: 13px;"></span>');
+  }
+
+  const $c = $('#chapter-counter');
+  if (count < minRequired) {
+    $c.css('color', '#d63638').text(`Chapters: ${count} / ${minRequired} minimum`);
+  } else {
+    $c.css('color', '#646970').text(`Chapters: ${count}`);
+  }
 };
 
 const initializeKeyboardNavigation = () => {
@@ -249,6 +273,7 @@ const initializeKeyboardNavigation = () => {
     $(document).on('click', '.vcm-remove-btn', function () {
       $(this).closest('.vcm-chapter-row').remove();
       setFirstChapterLock();
+      updateChapterCounter();
     });
   });
 })(jQuery);
