@@ -117,6 +117,17 @@
   background: rgba(34, 113, 177, 0.1) !important;
 }
 
+.vcm-copy-btn.vcm-locked {
+  color: #a7aaad !important;
+  cursor: not-allowed;
+}
+
+.vcm-copy-btn.vcm-locked:hover {
+  color: #a7aaad !important;
+  border-color: transparent !important;
+  background: none !important;
+}
+
 /* Remove button */
 .vcm-remove-btn {
   display: inline-flex !important;
