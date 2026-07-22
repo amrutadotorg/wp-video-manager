@@ -211,6 +211,14 @@ class VideoChaptersAjaxTest extends TestCase {
 		$this->assertArrayNotHasKey( 'debug', $response );
 	}
 
+	public function test_error_logger_accepts_all_throwables(): void {
+		$method = new ReflectionMethod( 'Video_Chapters_AJAX', 'log_error' );
+		$type   = $method->getParameters()[0]->getType();
+
+		$this->assertInstanceOf( ReflectionNamedType::class, $type );
+		$this->assertSame( Throwable::class, $type->getName() );
+	}
+
 	private function call_private_method( $method_name, $arguments ) {
 		$method = new ReflectionMethod( 'Video_Chapters_AJAX', $method_name );
 

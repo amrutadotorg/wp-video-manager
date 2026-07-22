@@ -146,7 +146,7 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 						'sync_status'   => $sync_status,
 					)
 				);
-			} catch ( Exception $e ) {
+			} catch ( Throwable $e ) {
 				$error_id = $this->generate_error_id();
 				$this->log_error( $e, $post_id ?? null, $youtube_id ?? null, $error_id );
 				wp_send_json_error(
@@ -362,12 +362,12 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 		/**
 		 * Log error with context. Detailed diagnostics must never be sent to AJAX clients.
 		 *
-		 * @param Exception $e          Exception that was thrown.
+		 * @param Throwable $e          Error or exception that was thrown.
 		 * @param int|null  $post_id    WordPress post ID, when available.
 		 * @param string|null $youtube_id YouTube ID, when available.
 		 * @param string     $error_id  Safe error reference sent to the client.
 		 */
-		private function log_error( Exception $e, $post_id = null, $youtube_id = null, $error_id = '' ) {
+		private function log_error( Throwable $e, $post_id = null, $youtube_id = null, $error_id = '' ) {
 			global $wpdb;
 
 			error_log( "Video Chapters Manager Error [$error_id]: " . $e->getMessage() );
