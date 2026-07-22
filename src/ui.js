@@ -5,6 +5,7 @@ import { getChapterTitlesAPI } from './api.js';
 export const clearAllErrors = () => {
   $('#alert-message').remove();
   $('.chapter-time, .chapter-title').removeClass('vcm-error');
+  $('.vcm-title-widget').removeClass('vcm-error');
 };
 
 export const showMessage = (message, type = 'info') => {
@@ -79,20 +80,135 @@ export const initializeTimeInput = (input) => {
   });
 };
 
+/**
+ * Attach chip-style title widget to a row.
+ * The hidden .chapter-title input holds the committed value.
+ * The visible .vcm-title-search input is the autocomplete field.
+ */
+const attachTitleWidget = (row, initialTitle) => {
+  const widget    = row.find('.vcm-title-widget');
+  const hidden    = row.find('.chapter-title');      // real value storage
+  const chipWrap  = row.find('.vcm-title-chip-wrap');
+  const searchWrap = row.find('.vcm-title-search-wrap');
+  const searchInput = row.find('.vcm-title-search');
+  const hint      = row.find('.vcm-title-hint');
+
+  /** Show a chip for the committed title and hide the search input */
+  const commitTitle = (value) => {
+    if (!value.trim()) return;
+    hidden.val(value.trim());
+    widget.removeClass('vcm-error');
+
+    // Build chip
+    chipWrap.empty();
+    const chip = $('<span class="vcm-title-chip"></span>');
+    const label = $('<span class="vcm-title-chip-label"></span>').text(value.trim());
+    const removeBtn = $('<button type="button" class="vcm-title-chip-remove" aria-label="Remove title">&times;</button>');
+    chip.append(label).append(removeBtn);
+    chipWrap.append(chip).show();
+
+    // Hide search area
+    searchWrap.hide();
+    hint.hide();
+
+    // Remove chip → restore search
+    removeBtn.on('click', () => {
+      hidden.val('');
+      chipWrap.empty().hide();
+      searchInput.val('');
+      searchWrap.show();
+      hint.show();
+      searchInput.focus();
+    });
+  };
+
+  // If we have an initial title (loaded from DB) show the chip immediately
+  if (initialTitle) {
+    commitTitle(initialTitle);
+  } else {
+    chipWrap.hide();
+    searchWrap.show();
+    hint.show();
+  }
+
+  // Autocomplete on the search input
+  searchInput.autocomplete({
+    source: function(request, response) {
+      const term = request.term.trim();
+      getChapterTitlesAPI(term).then(
+        (data) => {
+          const existing = Array.isArray(data) ? data.slice(0, 10) : [];
+          const lowerTerm = term.toLowerCase();
+          const exactMatch = existing.some(
+            (t) => t.trim().toLowerCase() === lowerTerm
+          );
+          const items = existing.map((t) => ({ label: t, value: t, isNew: false }));
+          if (!exactMatch && term.length >= 3) {
+            items.push({
+              label: `+ Add new title: "${term}"`,
+              value: term,
+              isNew: true,
+            });
+          }
+          response(items);
+        },
+        () => response([])
+      );
+    },
+    minLength: 3,
+    delay: 300,
+    select: function(event, ui) {
+      event.preventDefault();
+      commitTitle(ui.item.value);
+    },
+  });
+
+  searchInput.autocomplete('instance')._renderItem = function(ul, item) {
+    return $('<li>')
+      .toggleClass('vcm-suggestion-new', !!item.isNew)
+      .toggleClass('vcm-suggestion-existing', !item.isNew)
+      .append($('<div>').text(item.label))
+      .appendTo(ul);
+  };
+
+  // Allow committing a manually typed title with Enter
+  searchInput.on('keydown', function(e) {
+    if (e.key === 'Enter' && $(this).val().trim().length >= 1) {
+      // Only commit if autocomplete menu is NOT open
+      if (!searchInput.autocomplete('widget').is(':visible')) {
+        e.preventDefault();
+        e.stopPropagation();
+        commitTitle($(this).val().trim());
+      }
+    }
+  });
+
+  // Update hint visibility on typing
+  searchInput.on('input', function() {
+    hint.toggle($(this).val().length === 0 && !hidden.val());
+  });
+};
+
 export const createChapterRow = (chapter = {}) => {
   const timeStr = chapter.startChapter || '0:00';
-  const title = chapter.title || '';
+  const title   = chapter.title || '';
 
   const row = $(`
     <div class="vcm-chapter-row">
       <div class="vcm-row-fields">
         <div class="vcm-field">
-          <label for="">Start Time</label>
+          <label>Start Time</label>
           <input type="text" class="regular-text chapter-time" placeholder="0:00">
         </div>
         <div class="vcm-field vcm-field-title">
-          <label for="">Title</label>
-          <input type="text" class="regular-text chapter-title" placeholder="Chapter Title">
+          <label>Title</label>
+          <input type="hidden" class="chapter-title">
+          <div class="vcm-title-widget">
+            <div class="vcm-title-chip-wrap"></div>
+            <div class="vcm-title-search-wrap">
+              <input type="text" class="regular-text vcm-title-search" placeholder="Search or type a title…" autocomplete="off">
+            </div>
+          </div>
           <span class="description vcm-title-hint">Type 3+ characters to see title suggestions.</span>
         </div>
         <button type="button" class="button vcm-remove-btn" aria-label="Remove chapter">&times;</button>
@@ -103,52 +219,7 @@ export const createChapterRow = (chapter = {}) => {
   row.find('.chapter-time').val(timeStr);
   initializeTimeInput(row.find('.chapter-time'));
 
-  const titleField = row.find('.chapter-title').val(title);
-
-  titleField.autocomplete({
-    source: function(request, response) {
-      const term = request.term.trim();
-
-      getChapterTitlesAPI(term).then(
-        (data) => {
-          const existing = Array.isArray(data) ? data.slice(0, 10) : [];
-          const lowerTerm = term.toLowerCase();
-          const exactMatch = existing.some(
-            (t) => t.trim().toLowerCase() === lowerTerm
-          );
-
-          const items = existing.map((t) => ({ label: t, value: t, isNew: false }));
-
-          if (!exactMatch && term.length >= 3) {
-            items.push({
-              label: `+ Add new title: "${term}"`,
-              value: term,
-              isNew: true,
-            });
-          }
-
-          response(items);
-        },
-        () => response([])
-      );
-    },
-    minLength: 3,
-    delay: 300,
-  });
-
-  titleField.autocomplete('instance')._renderItem = function(ul, item) {
-    return $('<li>')
-      .toggleClass('vcm-suggestion-new', !!item.isNew)
-      .toggleClass('vcm-suggestion-existing', !item.isNew)
-      .append($('<div>').text(item.label))
-      .appendTo(ul);
-  };
-
-  const hint = row.find('.vcm-title-hint');
-  titleField.on('input', function() {
-    hint.toggle($(this).val().length === 0);
-  });
-  hint.toggle(title.length === 0);
+  attachTitleWidget(row, title);
 
   return row;
 };

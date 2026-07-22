@@ -72,7 +72,7 @@ const saveChapters = async () => {
     if (!startTime || !title) {
       hasErrors = true;
       if (!startTime) $row.find('.chapter-time').addClass('vcm-error');
-      if (!title) $row.find('.chapter-title').addClass('vcm-error');
+      if (!title) $row.find('.vcm-title-widget').addClass('vcm-error');
       return;
     }
 
@@ -190,8 +190,16 @@ const searchVideo = async () => {
 };
 
 const initializeKeyboardNavigation = () => {
-  $(document).on('keydown', '.chapter-time, .chapter-title', function (e) {
+  $(document).on('keydown', '.chapter-time, .vcm-title-search', function (e) {
     if (e.key === 'Enter') {
+      // For .vcm-title-search, only navigate if autocomplete is not open
+      // (Enter on autocomplete-open is handled by attachTitleWidget)
+      if ($(this).hasClass('vcm-title-search')) {
+        const acWidget = $(this).autocomplete('widget');
+        if (acWidget && acWidget.is(':visible')) return;
+        // If typed value will be committed (length>=1), let that handler fire
+        if ($(this).val().trim().length >= 1) return;
+      }
       e.preventDefault();
       const currentRow = $(this).closest('.vcm-chapter-row');
       if (currentRow.is(':last-child')) {

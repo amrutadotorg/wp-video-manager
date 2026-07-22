@@ -133,6 +133,98 @@
   background-image: none !important;
 }
 
+/* ── Title chip widget ─────────────────────────────────── */
+
+.vcm-title-widget {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  padding: 3px 6px;
+  background: #fff;
+  border: 1px solid var(--border-color, #c3c4c7);
+  border-radius: 4px;
+  box-sizing: border-box;
+  cursor: text;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.vcm-title-widget:focus-within {
+  border-color: var(--wp-admin-theme-color, #2271b1);
+  box-shadow: 0 0 0 1px var(--wp-admin-theme-color, #2271b1);
+}
+
+.vcm-title-widget.vcm-error {
+  border-color: var(--color-error, #d63638) !important;
+  box-shadow: 0 0 0 1px var(--color-error, #d63638);
+}
+
+/* Chip inside the widget */
+.vcm-title-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 8px;
+  background: var(--wp-admin-theme-color, #2271b1);
+  color: #fff;
+  border-radius: 3px;
+  font-size: 12px;
+  line-height: 1.4;
+  max-width: 100%;
+}
+
+.vcm-title-chip-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 260px;
+}
+
+.vcm-title-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: color 0.1s, background 0.1s;
+}
+
+.vcm-title-chip-remove:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Search input inside the widget — unstyled, fills remaining space */
+.vcm-title-search-wrap {
+  flex: 1;
+  min-width: 120px;
+  display: flex;
+}
+
+.vcm-title-search-wrap .vcm-title-search {
+  width: 100%;
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  background: transparent !important;
+  padding: 0 4px !important;
+  margin: 0 !important;
+  height: 24px;
+  font-size: 13px;
+  color: var(--text-color, #1d2327);
+}
+
+.vcm-title-chip-wrap {
+  display: none;  /* toggled via JS */
+}
+
 /* Responsive */
 @media (max-width: 782px) {
   .vcm-row-fields {
