@@ -103,41 +103,11 @@ const attachTitleWidget = (row, initialTitle) => {
     hidden.val(value.trim()).trigger('change');
     widget.removeClass('vcm-error');
 
-    // Build chip — inline styles survive Dracula Dark Mode overrides
+    // Build chip
     chipWrap.empty();
-    const chip = $('<span class="vcm-title-chip"></span>').css({
-      display: 'inline-flex',
-      alignItems: 'center',
-      gap: '4px',
-      padding: '2px 4px 2px 8px',
-      backgroundColor: '#2271b1',
-      color: '#ffffff',
-      borderRadius: '3px',
-      fontSize: '12px',
-      lineHeight: '1.4',
-      maxWidth: '100%',
-    });
-    const label = $('<span class="vcm-title-chip-label"></span>').text(value.trim()).css({
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-      whiteSpace: 'nowrap',
-      maxWidth: '260px',
-      color: '#ffffff',
-      backgroundColor: 'transparent',
-    });
-    const removeBtn = $('<button type="button" class="vcm-title-chip-remove" aria-label="Remove title">&times;</button>').css({
-      display: 'inline-flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'transparent',
-      border: 'none',
-      color: 'rgba(255,255,255,0.8)',
-      fontSize: '15px',
-      lineHeight: '1',
-      padding: '0 2px',
-      cursor: 'pointer',
-      borderRadius: '2px',
-    });
+    const chip = $('<span class="vcm-title-chip"></span>');
+    const label = $('<span class="vcm-title-chip-label"></span>').text(value.trim());
+    const removeBtn = $('<button type="button" class="vcm-title-chip-remove" aria-label="Remove title">&times;</button>');
     chip.append(label).append(removeBtn);
     // Append chip to wrap — DOM presence makes it visible (no .show() needed)
     chipWrap.append(chip);
