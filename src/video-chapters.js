@@ -297,5 +297,28 @@ const initializeKeyboardNavigation = () => {
       setFirstChapterLock();
       updateChapterCounter();
     });
+
+    $(document).on('click', '.vcm-copy-btn', function () {
+      const $row = $(this).closest('.vcm-chapter-row');
+      const timeStr = $row.find('.chapter-time').val().trim();
+      const youtubeId = $('#video-info').data('youtube-id');
+
+      if (!timeStr || !youtubeId) return;
+
+      const parts = timeStr.split(':').map(Number);
+      let seconds;
+      if (parts.length === 3) {
+        seconds = parts[0] * 3600 + parts[1] * 60 + parts[2];
+      } else {
+        seconds = parts[0] * 60 + parts[1];
+      }
+
+      const url = 'https://youtu.be/' + youtubeId + '?t=' + seconds;
+      navigator.clipboard.writeText(url).then(() => {
+        const $btn = $(this);
+        $btn.find('.dashicons').removeClass('dashicons-admin-links').addClass('dashicons-yes');
+        setTimeout(() => $btn.find('.dashicons').removeClass('dashicons-yes').addClass('dashicons-admin-links'), 1500);
+      });
+    });
   });
 })(jQuery);
