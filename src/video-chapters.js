@@ -230,9 +230,13 @@ const setFirstChapterLock = () => {
       $time.val('0:00').prop('disabled', true).addClass('vcm-locked')
         .attr('title', 'First chapter must always start at 0:00');
       $field.append('<span class="vcm-locked-hint">First chapter is always 0:00</span>');
+      $(this).find('.vcm-copy-btn').prop('disabled', true).addClass('vcm-locked')
+        .attr('title', 'First chapter (0:00) link is always the same');
     } else {
       $time.prop('disabled', false).removeClass('vcm-locked')
         .removeAttr('title');
+      $(this).find('.vcm-copy-btn').prop('disabled', false).removeClass('vcm-locked')
+        .attr('title', 'Copy link to this chapter');
     }
   });
 };
@@ -298,7 +302,9 @@ const initializeKeyboardNavigation = () => {
       updateChapterCounter();
     });
 
-    $(document).on('click', '.vcm-copy-btn', function () {
+    $(document).on('mousedown', '.vcm-copy-btn', function (e) {
+      e.preventDefault();
+
       const $row = $(this).closest('.vcm-chapter-row');
       const timeStr = $row.find('.chapter-time').val().trim();
       const youtubeId = $('#video-info').data('youtube-id');
@@ -318,6 +324,8 @@ const initializeKeyboardNavigation = () => {
         const $btn = $(this);
         $btn.find('.dashicons').removeClass('dashicons-admin-links').addClass('dashicons-yes');
         setTimeout(() => $btn.find('.dashicons').removeClass('dashicons-yes').addClass('dashicons-admin-links'), 1500);
+      }).catch(() => {
+        showMessage('Failed to copy link. Please copy manually: ' + url, 'error');
       });
     });
   });
