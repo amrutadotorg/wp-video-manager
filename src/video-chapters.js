@@ -66,7 +66,7 @@ const initializeApp = () => {
         const validation = isValidChapterTime(currentTime, existingChapters);
         if (!validation.valid) {
           showMessage(
-            `Cannot add chapter at ${currentTime} — must be at least 10 seconds from the chapter at ${validation.conflictWith} (${validation.difference}s apart).`,
+            `Cannot add chapter at ${currentTime} — must be at least 10 seconds from the chapter at ${validation.conflictWith} (${validation.difference}s apart). Move the player to a later moment and try again.`,
             'error'
           );
           return;
