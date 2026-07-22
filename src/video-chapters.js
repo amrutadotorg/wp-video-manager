@@ -17,11 +17,11 @@ const initializeApp = () => {
         <input type="text" id="youtube-id" class="regular-text" placeholder="Enter YouTube ID or URL">
         <button class="button button-primary" id="search-video">Search</button>
       </div>
-      <div id="video-info"></div>
-      <div id="chapters-container"></div>
+      <div id="video-info" class="vcm-video-info"></div>
+      <div id="chapters-container" class="vcm-chapters-container"></div>
       <div class="vcm-actions" style="display: none; align-items: center;">
         <button class="button" id="add-chapter">Add Chapter</button>
-        <button class="button button-primary" id="save-chapters">Save Chapters</button>
+        <button class="button button-primary vcm-save-chapters" id="save-chapters">Save Chapters</button>
         <span style="margin-left: 15px; color: #646970; font-size: 13px;">
           💡 <strong>Tip:</strong> Pause the video at the desired moment, then click <em>Add Chapter</em> — the start time will be set automatically.
         </span>
@@ -162,7 +162,11 @@ const saveChapters = async () => {
     const response = await saveChaptersAPI(videoId, youtubeId, sortedChapters);
 
     if (response.success) {
-      showMessage(`Successfully saved ${sortedChapters.length} chapters! The data has been queued and will appear on YouTube and Vimeo within 1 hour.`, 'success');
+      const syncFailed = response.data?.sync_status === 'failed';
+      showMessage(
+        response.data?.message || `Successfully saved ${sortedChapters.length} chapters!`,
+        syncFailed ? 'error' : 'success'
+      );
 
       const $container = $('#chapters-container');
       $container.empty();
@@ -209,7 +213,7 @@ const searchVideo = async () => {
 
     if (response?.success) {
       const { id, title, ytid, chapters } = response.data;
-      let parsedChapters = JSON.parse(chapters) || [];
+		let parsedChapters = Array.isArray(chapters) ? chapters : [];
 
       parsedChapters = sortChapters(parsedChapters);
       

@@ -57,9 +57,9 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 			wp_send_json_success(
 				array(
 					'id'       => $video_data->post_id,
-					'title'    => esc_html( $video_data->post_title ),
-					'ytid'     => esc_attr( $youtube_id ),
-					'chapters' => wp_json_encode( $chapters_results, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE ),
+					'title'    => $video_data->post_title,
+					'ytid'     => $youtube_id,
+					'chapters' => $chapters_results,
 				)
 			);
 		}
@@ -80,8 +80,8 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 				}
 
 				$post_id    = filter_input( INPUT_POST, 'video_id', FILTER_VALIDATE_INT );
-				$youtube_id = isset( $_POST['youtube_id'] ) ? sanitize_text_field( $_POST['youtube_id'] ) : '';
-				$chapters   = isset( $_POST['chapters'] ) ? $_POST['chapters'] : array();
+				$youtube_id = isset( $_POST['youtube_id'] ) ? sanitize_text_field( wp_unslash( $_POST['youtube_id'] ) ) : '';
+				$chapters   = isset( $_POST['chapters'] ) ? wp_unslash( $_POST['chapters'] ) : array();
 
 				if ( ! $post_id || ! $youtube_id ) {
 					throw new Exception(
@@ -119,16 +119,31 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 
 				error_log( "Successfully saved $count chapters for video $internal_id (Post $post_id)" );
 
+				$sync_status  = 'queued';
+				$sync_message = empty( $chapters ) ? 'Chapters cleared successfully.' : 'Chapters saved successfully.';
 				if ( class_exists( 'Sync_Queue' ) ) {
-					Sync_Queue::queue_task( $post_id, 'youtube', 10, $youtube_id, 'video-chapters-manager' );
+					$queue_result = Sync_Queue::queue_task( $post_id, 'youtube', 10, $youtube_id, 'video-chapters-manager' );
+					if ( false === $queue_result ) {
+						$sync_status  = 'failed';
+						$sync_message = 'Chapters were saved, but synchronization could not be queued. Please contact an administrator.';
+						error_log( "Failed to queue chapter synchronization for video $internal_id (Post $post_id)" );
+					} elseif ( 0 === $queue_result ) {
+						$sync_status  = 'already_pending';
+						$sync_message = 'Chapters saved successfully. A synchronization task is already pending.';
+					}
+				} else {
+					$sync_status  = 'failed';
+					$sync_message = 'Chapters were saved, but the synchronization queue is unavailable. Please contact an administrator.';
+					error_log( "Synchronization queue class is unavailable for video $internal_id (Post $post_id)" );
 				}
 
 				wp_send_json_success(
 					array(
-						'message'       => empty( $chapters ) ? 'Chapters cleared successfully' : 'Chapters saved successfully',
+						'message'       => $sync_message,
 						'post_id'       => $post_id,
 						'video_id'      => $internal_id,
 						'chapter_count' => $count,
+						'sync_status'   => $sync_status,
 					)
 				);
 			} catch ( Exception $e ) {
@@ -223,9 +238,9 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 			wp_send_json_success(
 				array(
 					'user_id'      => $user_id,
-					'display_name' => $user ? esc_html( $user->display_name ) : '',
-					'user_login'   => $user ? esc_html( $user->user_login ) : '',
-					'user_email'   => $user ? esc_html( $user->user_email ) : '',
+					'display_name' => $user ? $user->display_name : '',
+					'user_login'   => $user ? $user->user_login : '',
+					'user_email'   => $user ? $user->user_email : '',
 					'action'       => $action_type,
 				)
 			);
@@ -240,31 +255,59 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 		}
 
 		/**
+		 * Check whether a timestamp uses the supported MM:SS or HH:MM:SS format.
+		 */
+		private function is_valid_time_format( $time_str ) {
+			if ( ! preg_match( '/^\d{1,2}:\d{2}(:\d{2})?$/', $time_str ) ) {
+				return false;
+			}
+
+			$parts = array_map( 'intval', explode( ':', $time_str ) );
+			if ( count( $parts ) === 2 ) {
+				return $parts[0] < 60 && $parts[1] < 60;
+			}
+
+			return $parts[1] < 60 && $parts[2] < 60;
+		}
+
+		/**
 		 * Sanitize and validate chapter data from POST.
 		 */
 		private function validate_chapters( $chapters ) {
+			if ( ! is_array( $chapters ) ) {
+				throw new Exception( 'Invalid chapter data.' );
+			}
+
 			if ( empty( $chapters ) ) {
 				return array();
 			}
 
 			$validated = array();
 			foreach ( $chapters as $chapter ) {
-				if ( empty( $chapter['startChapter'] ) || empty( $chapter['title'] ) ) {
-					continue;
+				if ( ! is_array( $chapter ) || ! isset( $chapter['startChapter'], $chapter['title'] ) ) {
+					throw new Exception( 'Invalid chapter data.' );
 				}
 
-				if ( ! preg_match( '/^\d{1,2}:\d{2}(:\d{2})?$/', $chapter['startChapter'] ) ) {
-					throw new Exception( 'Invalid time format for chapter: ' . esc_html( $chapter['startChapter'] ) );
+				$start_time = sanitize_text_field( $chapter['startChapter'] );
+				$title      = sanitize_text_field( $chapter['title'] );
+
+				if ( '' === $start_time || '' === $title ) {
+					throw new Exception( 'Each chapter must include a start time and title.' );
+				}
+
+				if ( ! $this->is_valid_time_format( $start_time ) ) {
+					throw new Exception( 'Invalid time format for chapter: ' . esc_html( $start_time ) );
 				}
 
 				$validated[] = array(
-					'startChapter' => sanitize_text_field( $chapter['startChapter'] ),
-					'title'        => sanitize_text_field( stripslashes( $chapter['title'] ) ),
+					'startChapter' => $start_time,
+					'title'        => $title,
 				);
 			}
 
-			if ( count( $validated ) > 0 ) {
-				if ( count( $validated ) < 3 ) {
+			$chapter_count = count( $validated );
+			if ( $chapter_count > 0 ) {
+				if ( $chapter_count < 3 ) {
 					throw new Exception( 'You must include at least three separate chapters.' );
 				}
 
@@ -277,6 +320,23 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 
 				if ( $this->time_to_seconds( $validated[0]['startChapter'] ) !== 0 ) {
 					throw new Exception( 'The very first timestamp on your list must be exactly 0:00.' );
+				}
+
+				for ( $index = 1; $index < $chapter_count; $index++ ) {
+					$previous_time = $this->time_to_seconds( $validated[ $index - 1 ]['startChapter'] );
+					$current_time  = $this->time_to_seconds( $validated[ $index ]['startChapter'] );
+					$difference    = $current_time - $previous_time;
+
+					if ( $difference < 10 ) {
+						throw new Exception(
+							sprintf(
+								'Chapters must be at least 10 seconds apart: %1$s and %2$s are only %3$d seconds apart.',
+								esc_html( $validated[ $index - 1 ]['startChapter'] ),
+								esc_html( $validated[ $index ]['startChapter'] ),
+								esc_html( $difference )
+							)
+						);
+					}
 				}
 			}
 

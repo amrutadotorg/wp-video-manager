@@ -29,6 +29,9 @@
 npm install              # Install dependencies (npm + composer)
 npm run build            # Production build → dist/
 npm run dev              # Development build with watch mode
+npm test                 # Vitest unit tests
+npm run test:watch       # Vitest in watch mode
+docker compose -f containers/video-manager-test/docker-compose.yml --profile test run --rm --no-deps phpunit  # PHPUnit in Docker
 npm run lint             # ESLint check on src/
 npm run lint:fix         # ESLint auto-fix on src/
 npm run php:lint         # PHPCS check (WordPress-Extra)
@@ -49,6 +52,8 @@ composer run lint        # Alternative PHPCS via composer
 │   ├── api.js                    # AJAX wrappers: search, save, autocomplete
 │   ├── ui.js                     # DOM: createChapterRow, showMessage, time input
 │   └── video-chapters.css        # Frontend styles (WP CSS variables)
+├── tests/
+│   └── validation.test.js        # Vitest unit tests for pure validation functions
 ├── dist/                         # Compiled output (do not edit, gitignored)
 │   ├── video-chapters.min.js     # Minified JS bundle
 │   └── video-chapters.min.css    # Minified CSS bundle
@@ -104,9 +109,11 @@ Managed by `Video_Chapters_DB::activate()` on plugin activation:
 Before considering any change complete, run:
 
 ```bash
-npm run lint             # 1. ESLint — must pass with zero errors
-npm run php:lint         # 2. PHPCS — must pass with zero errors
-npm run build            # 3. Production build — must succeed
+npm test                 # 1. Vitest — must pass
+docker compose -f containers/video-manager-test/docker-compose.yml --profile test run --rm --no-deps phpunit  # 2. PHPUnit — must pass
+npm run lint             # 3. ESLint — must pass with zero errors
+npm run php:lint         # 4. PHPCS — must pass with zero errors
+npm run build            # 5. Production build — must succeed
 ```
 
 Pre-commit hooks (Husky + lint-staged) run ESLint and PHPCS automatically on staged files.
@@ -183,7 +190,9 @@ git push
 - **jQuery UI from WordPress**: jQuery and jQuery UI are loaded from WordPress (not bundled). Webpack `externals` maps `jquery` to `window.jQuery`.
 - **Bundle size**: `video-chapters.min.js` is ~7 KiB (jQuery/jQuery UI excluded from bundle)
 - **No TypeScript** — pure JavaScript with Babel transpilation
-- **No unit tests** — verification is via lint + build + WordPress integration testing
+- **Test scope**: Vitest covers pure frontend validation functions. PHP handlers still need
+  WordPress-aware integration tests (for example PHPUnit with wp-env) before their validation
+  logic can be covered automatically.
 - **Pre-commit hooks**: Husky runs ESLint + PHPCS on staged files before each commit
 
 ## WordPress Integration

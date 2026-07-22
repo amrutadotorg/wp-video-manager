@@ -8,6 +8,7 @@ export default [
       sourceType: 'module',
       globals: {
         videoChapters: 'readonly',
+        videoChaptersUsers: 'readonly',
         jQuery: 'readonly',
         $: 'readonly',
         console: 'readonly',
@@ -21,6 +22,8 @@ export default [
         FormData: 'readonly',
         fetch: 'readonly',
         Promise: 'readonly',
+        alert: 'readonly',
+        confirm: 'readonly',
       },
     },
     rules: {

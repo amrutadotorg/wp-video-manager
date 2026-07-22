@@ -22,47 +22,93 @@ if ( ! class_exists( 'Sync_Queue' ) ) {
 		public static function queue_task( $post_id, $target, $priority = 10, $ytid = null, $source = null ) {
 			global $wpdb;
 
-			$table_name = 'nvp_sync_queue';
+			// This queue is shared with external sync workers, so it intentionally has no WordPress table prefix.
+			if ( null === $ytid && null === $source ) {
+				$prepared_sql = $wpdb->prepare(
+					"INSERT INTO nvp_sync_queue
+						(post_id, ytid, target, priority, status, source, created_at)
+						SELECT %d, NULL, %s, %d, 'pending', NULL, NOW()
+						FROM DUAL
+						WHERE NOT EXISTS (
+							SELECT 1 FROM nvp_sync_queue
+							WHERE post_id = %d
+								AND target = %s
+								AND ytid <=> NULL
+								AND status IN ('pending', 'processing')
+						)",
+					$post_id,
+					$target,
+					$priority,
+					$post_id,
+					$target
+				);
+			} elseif ( null === $source ) {
+				$prepared_sql = $wpdb->prepare(
+					"INSERT INTO nvp_sync_queue
+						(post_id, ytid, target, priority, status, source, created_at)
+						SELECT %d, %s, %s, %d, 'pending', NULL, NOW()
+						FROM DUAL
+						WHERE NOT EXISTS (
+							SELECT 1 FROM nvp_sync_queue
+							WHERE post_id = %d
+								AND target = %s
+								AND ytid <=> %s
+								AND status IN ('pending', 'processing')
+						)",
+					$post_id,
+					$ytid,
+					$target,
+					$priority,
+					$post_id,
+					$target,
+					$ytid
+				);
+			} elseif ( null === $ytid ) {
+				$prepared_sql = $wpdb->prepare(
+					"INSERT INTO nvp_sync_queue
+						(post_id, ytid, target, priority, status, source, created_at)
+						SELECT %d, NULL, %s, %d, 'pending', %s, NOW()
+						FROM DUAL
+						WHERE NOT EXISTS (
+							SELECT 1 FROM nvp_sync_queue
+							WHERE post_id = %d
+								AND target = %s
+								AND ytid <=> NULL
+								AND status IN ('pending', 'processing')
+						)",
+					$post_id,
+					$target,
+					$priority,
+					$source,
+					$post_id,
+					$target
+				);
+			} else {
+				$prepared_sql = $wpdb->prepare(
+					"INSERT INTO nvp_sync_queue
+						(post_id, ytid, target, priority, status, source, created_at)
+						SELECT %d, %s, %s, %d, 'pending', %s, NOW()
+						FROM DUAL
+						WHERE NOT EXISTS (
+							SELECT 1 FROM nvp_sync_queue
+							WHERE post_id = %d
+								AND target = %s
+								AND ytid <=> %s
+								AND status IN ('pending', 'processing')
+						)",
+					$post_id,
+					$ytid,
+					$target,
+					$priority,
+					$source,
+					$post_id,
+					$target,
+					$ytid
+				);
+			}
 
-			// Prepare optional values
-			$ytid_val_sql   = ( null === $ytid ) ? 'NULL' : $wpdb->prepare( '%s', $ytid );
-			$source_val_sql = ( null === $source ) ? 'NULL' : $wpdb->prepare( '%s', $source );
-
-			// We use DUAL table for the INSERT ... SELECT pattern to handle duplicate checks
-			// created_at is handled by the DB default CURRENT_TIMESTAMP usually, but we set explicit NOW() to match Python logic
-			$sql = "INSERT INTO $table_name
-                (post_id, ytid, target, priority, status, source, created_at)
-                SELECT %d, $ytid_val_sql, %s, %d, 'pending', $source_val_sql, NOW()
-                FROM DUAL
-                WHERE NOT EXISTS (
-                    SELECT 1 FROM $table_name
-                    WHERE post_id = %d
-                      AND target = %s
-                      AND ytid <=> $ytid_val_sql
-                      AND status IN ('pending', 'processing')
-                )";
-
-			// Prepare the final query
-			// Arguments order:
-			// 1. post_id (SELECT)
-			// 2. target (SELECT)
-			// 3. priority (SELECT)
-			// 4. post_id (WHERE)
-			// 5. target (WHERE)
-			// Note: ytid_val_sql is already interpolated into the string safely
-
-		// phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
-			$prepared_sql = $wpdb->prepare(
-				$sql,
-				$post_id,
-				$target,
-				$priority,
-				$post_id,
-				$target
-			);
-
+			// phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- $prepared_sql is prepared in every branch above.
 			$result = $wpdb->query( $prepared_sql );
-			// phpcs:enable WordPress.DB.PreparedSQL.NotPrepared
 
 			if ( $result ) {
 				$log_parts = array( "post_id=$post_id", "target=$target", "priority=$priority" );

@@ -9,6 +9,7 @@
         "yoast/phpunit-polyfills": "^2.0"
     },
     "scripts": {
+        "test": "phpunit --configuration phpunit.xml.dist",
         "lint": "phpcs",
         "lint:fix": "phpcbf"
     },
