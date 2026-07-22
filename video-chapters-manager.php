@@ -12,10 +12,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 // Load dependencies
 foreach ( array( 'class-video-chapters-db.php', 'class-video-chapters-access.php', 'class-sync-queue.php', 'class-ajax-handlers.php' ) as $dep_file ) {
-	$dep_path = __DIR__ . '/' . $dep_file;
-	if ( file_exists( $dep_path ) && ! class_exists( basename( $dep_file, '.php' ) ) ) {
-		require_once $dep_path;
-	}
+	require_once __DIR__ . '/' . $dep_file;
 }
 
 class VideoChaptersManager {

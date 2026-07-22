@@ -4,5 +4,6 @@
 + /dist/
 + /dist/*.js
 + /dist/*.css
++ /admin-users.js
 + /*.php
 - *
