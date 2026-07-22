@@ -26,6 +26,23 @@
   margin: 0;
 }
 
+/* Responsive video embed */
+.vcm-video-wrap {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  margin: 12px 0;
+}
+
+.vcm-video-wrap iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
 /* Chapters container */
 #chapters-container {
   margin: 16px 0;

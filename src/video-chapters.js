@@ -182,9 +182,16 @@ const searchVideo = async () => {
 
       const $notice = $('<div class="notice notice-info"></div>');
       $notice.append($('<p></p>').html('<strong>Title:</strong> ').append($('<span></span>').text(title)));
-      $notice.append($('<p></p>').html('<strong>URL:</strong> ').append(
-        $('<a></a>').attr('href', 'https://youtube.com/watch?v=' + ytid).attr('target', '_blank').text('View on YouTube')
-      ));
+
+      const $videoWrap = $('<div class="vcm-video-wrap"></div>');
+      const $iframe = $('<iframe></iframe>')
+        .attr('src', 'https://www.youtube-nocookie.com/embed/' + ytid)
+        .attr('frameborder', '0')
+        .attr('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture')
+        .attr('allowfullscreen', true);
+      $videoWrap.append($iframe);
+      $notice.append($videoWrap);
+
       $info.append($notice);
 
       const $container = $('#chapters-container');
