@@ -218,11 +218,41 @@ const attachTitleWidget = (row, initialTitle) => {
     },
     minLength: 3,
     delay: 300,
-    select: function(event, ui) {
-      event.preventDefault();
-      commitTitle(ui.item.value);
-    },
+    autoFocus: true,
   });
+
+  // Track whichever item is focused in the dropdown (autoFocus, arrows, hover).
+  // 'autocompletefocus' fires for ALL focus sources — more reliable than menu.active,
+  // which is null when autoFocus sets focus internally.
+  let focusedAcItem = null;
+  // Prevents the keydown else-branch from committing raw text when jQuery UI already
+  // handled the select: jQuery UI's keydown fires first, calling menu.select() which
+  // triggers autocompleteselect and closes the menu synchronously. By the time our
+  // keydown fires the menu is gone, so without this flag the else-branch would
+  // overwrite the committed value with the raw typed text.
+  let selectJustFired = false;
+  searchInput
+    .on('autocompletefocus', function(event, ui) {
+      event.preventDefault(); // don't overwrite the user's typed text in the input
+      focusedAcItem = ui.item;
+    })
+    .on('autocompleteopen', function() {
+      focusedAcItem = null;
+    })
+    .on('autocompleteclose', function() {
+      focusedAcItem = null;
+      // Defer reset: our keydown fires synchronously AFTER this (keyboard path),
+      // so it must still see selectJustFired = true. For mouse clicks there is no
+      // following keydown, so the setTimeout fires well before any next interaction.
+      setTimeout(function() { selectJustFired = false; }, 0);
+    })
+    // Handles mouse-click and Tab selection; keyboard Enter is handled in keydown below.
+    .on('autocompleteselect', function(event, ui) {
+      event.preventDefault();
+      focusedAcItem = null;
+      selectJustFired = true;
+      commitTitle(ui.item.value);
+    });
 
   searchInput.autocomplete('instance')._renderItem = function(ul, item) {
     return $('<li>')
@@ -232,16 +262,29 @@ const attachTitleWidget = (row, initialTitle) => {
       .appendTo(ul);
   };
 
-  // Allow committing a manually typed title with Enter
+  // Enter key: commit the focused autocomplete item OR (when no menu) the raw typed text.
   searchInput.on('keydown', function(e) {
-    if (e.key === 'Enter' && $(this).val().trim().length >= 1) {
-      // Only commit if autocomplete menu is NOT open
-      if (!searchInput.autocomplete('widget').is(':visible')) {
+    if (e.key !== 'Enter' || $(this).val().trim().length < 1) return;
+
+    const menu = searchInput.autocomplete('widget');
+    if (menu.is(':visible')) {
+      if (focusedAcItem) {
+        // Capture before close() clears it via autocompleteclose handler.
+        const value = focusedAcItem.value;
         e.preventDefault();
         e.stopPropagation();
-        commitTitle($(this).val().trim());
+        searchInput.autocomplete('close'); // fires autocompleteclose → focusedAcItem = null
+        commitTitle(value);
       }
+      // No focused item yet (autoFocus hasn't fired): do nothing, let jQuery UI handle it.
+    } else if (!selectJustFired) {
+      // Menu was not open and autocomplete didn't just handle a select:
+      // commit whatever the user typed manually.
+      e.preventDefault();
+      e.stopPropagation();
+      commitTitle($(this).val().trim());
     }
+    // If selectJustFired: jQuery UI already committed via autocompleteselect — skip.
   });
 
   // Update hint visibility on typing
