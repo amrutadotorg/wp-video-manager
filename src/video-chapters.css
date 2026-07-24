@@ -124,6 +124,30 @@
   box-shadow: 0 0 0 1px var(--color-error, #d63638);
 }
 
+/* Warning state — chapters too close together (<10s gap) */
+.vcm-chapter-row.vcm-warning {
+  border-color: #dba617;
+  background: #fcf0e3;
+}
+
+.vcm-chapter-row.vcm-warning:hover {
+  border-color: #dba617;
+}
+
+.vcm-chapter-row.vcm-warning .chapter-time {
+  border-color: #dba617;
+}
+
+/* Duplicate title state — consecutive chapters share the same title */
+.vcm-chapter-row.vcm-duplicate-title {
+  border-color: #996800;
+  background: #fcf8e3;
+}
+
+.vcm-chapter-row.vcm-duplicate-title:hover {
+  border-color: #996800;
+}
+
 /* Locked first chapter time field */
 .chapter-time.vcm-locked {
   background: #f0f0f1 !important;

@@ -1,11 +1,42 @@
 import $ from 'jquery';
-import { timeToSeconds, secondsToTimeStr, isValidTimeFormat, isValidChapterTime, parseYouTubeTimeUrl, isValidChapterTitle, MAX_CHAPTER_TITLE_LENGTH } from './validation.js';
+import { timeToSeconds, secondsToTimeStr, isValidTimeFormat, isValidChapterTime, parseYouTubeTimeUrl, isValidChapterTitle, MAX_CHAPTER_TITLE_LENGTH, getInvalidChapterTimes, getDuplicateTitleIndices } from './validation.js';
 import { getChapterTitlesAPI } from './api.js';
 
 export const clearAllErrors = () => {
   $('#alert-message').remove();
   $('.chapter-time, .chapter-title').removeClass('vcm-error');
   $('.vcm-title-widget').removeClass('vcm-error');
+};
+
+export const highlightInvalidChapters = () => {
+  const chapters = [];
+  $('.vcm-chapter-row').each(function () {
+    const t = $(this).find('.chapter-time').val().trim();
+    const ti = $(this).find('.chapter-title').val().trim();
+    if (t) chapters.push({ startChapter: t, title: ti });
+  });
+
+  const invalidTimes = getInvalidChapterTimes(chapters);
+
+  $('.vcm-chapter-row').each(function () {
+    const t = $(this).find('.chapter-time').val().trim();
+    $(this).toggleClass('vcm-warning', invalidTimes.has(t));
+  });
+};
+
+export const highlightDuplicateTitles = () => {
+  const chapters = [];
+  $('.vcm-chapter-row').each(function () {
+    const t = $(this).find('.chapter-time').val().trim();
+    const ti = $(this).find('.chapter-title').val().trim();
+    chapters.push({ startChapter: t, title: ti });
+  });
+
+  const dupes = getDuplicateTitleIndices(chapters);
+
+  $('.vcm-chapter-row').each(function (i) {
+    $(this).toggleClass('vcm-duplicate-title', dupes.has(i));
+  });
 };
 
 export const showMessage = (message, type = 'info') => {
@@ -110,6 +141,18 @@ const attachTitleWidget = (row, initialTitle) => {
     }
     hidden.val(value.trim()).trigger('change');
     widget.removeClass('vcm-error');
+
+    const $currentRow = widget.closest('.vcm-chapter-row');
+    const $prevRow = $currentRow.prev('.vcm-chapter-row');
+    if ($prevRow.length) {
+      const prevTitle = $prevRow.find('.chapter-title').val().trim();
+      if (prevTitle && prevTitle === value.trim()) {
+        showMessage(
+          `Title "${value.trim()}" is same as the previous chapter. Consider merging or renaming.`,
+          'info'
+        );
+      }
+    }
 
     // Build chip
     chipWrap.empty();

@@ -1,9 +1,9 @@
 import $ from 'jquery';
 import './video-chapters.css';
 
-import { extractYouTubeId, sortChapters, isValidChapterTime, timeToSeconds, secondsToTimeStr, isValidChapterTitle, MAX_CHAPTER_TITLE_LENGTH } from './validation.js';
+import { extractYouTubeId, sortChapters, isValidChapterTime, timeToSeconds, secondsToTimeStr, isValidChapterTitle, MAX_CHAPTER_TITLE_LENGTH, getDuplicateTitleIndices } from './validation.js';
 import { searchVideoAPI, saveChaptersAPI } from './api.js';
-import { createChapterRow, showMessage, clearAllErrors } from './ui.js';
+import { createChapterRow, showMessage, clearAllErrors, highlightInvalidChapters, highlightDuplicateTitles } from './ui.js';
 
 let ytPlayer = null;
 window.originalChaptersJSON = '[]';
@@ -85,6 +85,8 @@ const initializeApp = () => {
 
   $('#chapters-container').on('input change', '.chapter-time, .chapter-title, .vcm-title-search', function() {
     updateChapterCounter();
+    highlightInvalidChapters();
+    highlightDuplicateTitles();
   });
 
   $('#save-chapters').on('click', saveChapters);
@@ -163,6 +165,16 @@ const saveChapters = async () => {
       showMessage('The very first timestamp on your list must be exactly 0:00.', 'error');
       return;
     }
+
+    const dupes = getDuplicateTitleIndices(sortedChapters);
+    if (dupes.size > 0) {
+      const dupeList = [...dupes].map(i => `Chapter at ${sortedChapters[i].startChapter} — title "${sortedChapters[i].title}" is same as previous chapter`).join('\n');
+      showMessage(
+        `Consecutive chapters cannot share the same title. Either merge them or rename one:\n\n${dupeList}`,
+        'error'
+      );
+      return;
+    }
   }
 
   const $saveButton = $('#save-chapters');
@@ -187,6 +199,8 @@ const saveChapters = async () => {
       });
       window.originalChaptersJSON = JSON.stringify(sortedChapters);
       setFirstChapterLock();
+      highlightInvalidChapters();
+      highlightDuplicateTitles();
     } else {
       throw new Error(response.data?.message || 'Unknown error occurred');
     }
@@ -283,6 +297,8 @@ const searchVideo = async () => {
 
       setFirstChapterLock();
       updateChapterCounter();
+      highlightInvalidChapters();
+      highlightDuplicateTitles();
       $('.vcm-actions').show();
     } else {
       throw new Error(response?.data || 'Video not found.');
@@ -384,6 +400,8 @@ const initializeKeyboardNavigation = () => {
       $(this).closest('.vcm-chapter-row').remove();
       setFirstChapterLock();
       updateChapterCounter();
+      highlightInvalidChapters();
+      highlightDuplicateTitles();
     });
   });
 })(jQuery);

@@ -58,6 +58,30 @@ export const MAX_CHAPTER_TITLE_LENGTH = 50;
 
 export const isValidChapterTitle = (title) => title.length <= MAX_CHAPTER_TITLE_LENGTH;
 
+export const getDuplicateTitleIndices = (chapters) => {
+  const dupes = new Set();
+  for (let i = 1; i < chapters.length; i++) {
+    if (chapters[i].title && chapters[i].title === chapters[i - 1].title) {
+      dupes.add(i);
+    }
+  }
+  return dupes;
+};
+
+export const getInvalidChapterTimes = (chapters) => {
+  const invalid = new Set();
+  for (let i = 0; i < chapters.length; i++) {
+    for (let j = i + 1; j < chapters.length; j++) {
+      const diff = getTimeDifferenceInSeconds(chapters[i].startChapter, chapters[j].startChapter);
+      if (diff < 10) {
+        invalid.add(chapters[i].startChapter);
+        invalid.add(chapters[j].startChapter);
+      }
+    }
+  }
+  return invalid;
+};
+
 export const extractYouTubeId = (input) => {
   const patterns = [
     /(?:https?:\/\/)?(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-_]*)/,
