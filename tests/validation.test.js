@@ -3,11 +3,13 @@ import {
   extractYouTubeId,
   getTimeDifferenceInSeconds,
   isValidChapterTime,
+  isValidChapterTitle,
   isValidTimeFormat,
   parseYouTubeTimeUrl,
   secondsToTimeStr,
   sortChapters,
   timeToSeconds,
+  MAX_CHAPTER_TITLE_LENGTH,
 } from '../src/validation.js';
 
 describe('time conversion', () => {
@@ -96,4 +98,22 @@ describe('YouTube input parsing', () => {
       expect(parseYouTubeTimeUrl(input)).toBeNull();
     }
   );
+});
+
+describe('chapter title validation', () => {
+  it('accepts a 50-character title', () => {
+    expect(isValidChapterTitle('A'.repeat(50))).toBe(true);
+  });
+
+  it('rejects a 51-character title', () => {
+    expect(isValidChapterTitle('A'.repeat(51))).toBe(false);
+  });
+
+  it('accepts an empty title', () => {
+    expect(isValidChapterTitle('')).toBe(true);
+  });
+
+  it('exports MAX_CHAPTER_TITLE_LENGTH as 50', () => {
+    expect(MAX_CHAPTER_TITLE_LENGTH).toBe(50);
+  });
 });

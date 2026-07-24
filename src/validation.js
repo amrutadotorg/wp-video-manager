@@ -54,6 +54,10 @@ export const isValidChapterTime = (newTime, existingChapters) => {
   return { valid: true };
 };
 
+export const MAX_CHAPTER_TITLE_LENGTH = 50;
+
+export const isValidChapterTitle = (title) => title.length <= MAX_CHAPTER_TITLE_LENGTH;
+
 export const extractYouTubeId = (input) => {
   const patterns = [
     /(?:https?:\/\/)?(?:www\.)?youtu(?:be\.com\/watch\?v=|\.be\/)([\w\-_]*)/,

@@ -1,7 +1,7 @@
 import $ from 'jquery';
 import './video-chapters.css';
 
-import { extractYouTubeId, sortChapters, isValidChapterTime, timeToSeconds, secondsToTimeStr } from './validation.js';
+import { extractYouTubeId, sortChapters, isValidChapterTime, timeToSeconds, secondsToTimeStr, isValidChapterTitle, MAX_CHAPTER_TITLE_LENGTH } from './validation.js';
 import { searchVideoAPI, saveChaptersAPI } from './api.js';
 import { createChapterRow, showMessage, clearAllErrors } from './ui.js';
 
@@ -104,6 +104,7 @@ const saveChapters = async () => {
   const chapters = [];
   let hasErrors = false;
   const timeErrors = [];
+  const titleErrors = [];
 
   $('.vcm-chapter-row').each(function() {
     const $row = $(this);
@@ -114,6 +115,13 @@ const saveChapters = async () => {
       hasErrors = true;
       if (!startTime) $row.find('.chapter-time').addClass('vcm-error');
       if (!title) $row.find('.vcm-title-widget').addClass('vcm-error');
+      return;
+    }
+
+    if (!isValidChapterTitle(title)) {
+      hasErrors = true;
+      $row.find('.vcm-title-widget').addClass('vcm-error');
+      titleErrors.push(`Chapter "${title.substring(0, 30)}${title.length > 30 ? '…' : ''}" exceeds ${MAX_CHAPTER_TITLE_LENGTH} characters (${title.length}).`);
       return;
     }
 
@@ -132,7 +140,11 @@ const saveChapters = async () => {
     let errorMessage = 'Please correct the following errors:\n';
     if (timeErrors.length > 0) {
       errorMessage += '\n' + timeErrors.join('\n');
-    } else {
+    }
+    if (titleErrors.length > 0) {
+      errorMessage += '\n' + titleErrors.join('\n');
+    }
+    if (!timeErrors.length && !titleErrors.length) {
       errorMessage = 'Please fill in all chapter fields.';
     }
     showMessage(errorMessage, 'error');

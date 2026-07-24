@@ -1,5 +1,5 @@
 import $ from 'jquery';
-import { timeToSeconds, secondsToTimeStr, isValidTimeFormat, isValidChapterTime, parseYouTubeTimeUrl } from './validation.js';
+import { timeToSeconds, secondsToTimeStr, isValidTimeFormat, isValidChapterTime, parseYouTubeTimeUrl, isValidChapterTitle, MAX_CHAPTER_TITLE_LENGTH } from './validation.js';
 import { getChapterTitlesAPI } from './api.js';
 
 export const clearAllErrors = () => {
@@ -100,6 +100,14 @@ const attachTitleWidget = (row, initialTitle) => {
   /** Show a chip for the committed title and hide the search input */
   const commitTitle = (value) => {
     if (!value.trim()) return;
+    if (!isValidChapterTitle(value.trim())) {
+      widget.addClass('vcm-error');
+      showMessage(
+        `Chapter title exceeds ${MAX_CHAPTER_TITLE_LENGTH} characters (${value.trim().length}). Vimeo will reject it.`,
+        'error'
+      );
+      return;
+    }
     hidden.val(value.trim()).trigger('change');
     widget.removeClass('vcm-error');
 
@@ -195,7 +203,16 @@ const attachTitleWidget = (row, initialTitle) => {
 
   // Update hint visibility on typing
   searchInput.on('input', function() {
-    hint.toggle($(this).val().length === 0 && !hidden.val());
+    const len = $(this).val().length;
+    if (len > 0) {
+      hint.text(`${len}/${MAX_CHAPTER_TITLE_LENGTH}`);
+      hint.toggleClass('vcm-error', len > MAX_CHAPTER_TITLE_LENGTH);
+      hint.show();
+    } else {
+      hint.html('Type 3+ characters to see title suggestions.');
+      hint.removeClass('vcm-error');
+      hint.toggle(!hidden.val());
+    }
   });
 };
 
