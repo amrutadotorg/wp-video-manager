@@ -194,7 +194,6 @@ const saveChapters = async () => {
   } catch (error) {
     const errorMessage = error.responseJSON?.data?.message || error.message || 'Failed to save chapters.';
     showMessage(errorMessage, 'error');
-  } finally {
     $saveButton.prop('disabled', false).text(originalText);
   }
 };
