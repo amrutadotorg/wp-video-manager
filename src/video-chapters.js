@@ -90,6 +90,22 @@ const initializeApp = () => {
   });
 
   $('#save-chapters').on('click', saveChapters);
+
+  $(document).on('click', '.vcm-start-time-link', function() {
+    const timeStr = $(this).closest('.vcm-field').find('.chapter-time').val().trim();
+    const seconds = timeToSeconds(timeStr);
+    if (ytPlayer && ytPlayer.seekTo) {
+      ytPlayer.seekTo(seconds, true);
+      if (ytPlayer.playVideo) ytPlayer.playVideo();
+    }
+  });
+
+  $(document).on('keydown', '.vcm-start-time-link', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      $(this).trigger('click');
+    }
+  });
 };
 
 const saveChapters = async () => {

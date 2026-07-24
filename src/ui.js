@@ -310,7 +310,7 @@ export const createChapterRow = (chapter = {}) => {
     <div class="vcm-chapter-row">
       <div class="vcm-row-fields">
         <div class="vcm-field">
-          <label>Start Time</label>
+          <label class="vcm-start-time-link" role="button" tabindex="0" title="Seek player to this time"><span class="dashicons dashicons-controls-play"></span> Start Time</label>
           <input type="text" class="regular-text chapter-time" placeholder="0:00">
         </div>
         <div class="vcm-field vcm-field-title">

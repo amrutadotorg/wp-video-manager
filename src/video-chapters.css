@@ -84,6 +84,31 @@
   color: var(--text-color, #1d2327);
 }
 
+.vcm-start-time-link {
+  cursor: pointer;
+  color: var(--wp-admin-theme-color, #2271b1);
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.vcm-start-time-link .dashicons-controls-play {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  line-height: 16px;
+}
+
+.vcm-start-time-link:hover {
+  color: var(--color-error, #d63638);
+}
+
+.vcm-start-time-link:focus {
+  outline: 2px solid var(--wp-admin-theme-color, #2271b1);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 .vcm-field-title {
   flex: 1;
   min-width: 200px;
