@@ -187,14 +187,15 @@ const saveChapters = async () => {
       });
       window.originalChaptersJSON = JSON.stringify(sortedChapters);
       setFirstChapterLock();
-      updateChapterCounter();
     } else {
       throw new Error(response.data?.message || 'Unknown error occurred');
     }
   } catch (error) {
     const errorMessage = error.responseJSON?.data?.message || error.message || 'Failed to save chapters.';
     showMessage(errorMessage, 'error');
-    $saveButton.prop('disabled', false).text(originalText);
+  } finally {
+    $saveButton.text(originalText);
+    updateChapterCounter();
   }
 };
 
