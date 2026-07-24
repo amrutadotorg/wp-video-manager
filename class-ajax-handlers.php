@@ -289,6 +289,18 @@ if ( ! class_exists( 'Video_Chapters_AJAX' ) ) {
 					throw new Exception( 'Each chapter must include a start time and title.' );
 				}
 
+				// Vimeo chapter title limit: max 50 characters.
+				$title_len = mb_strlen( $title );
+				if ( $title_len > 50 ) {
+					throw new Exception(
+						sprintf(
+							'Chapter title exceeds 50 characters (%1$d): %2$s',
+							absint( $title_len ),
+							esc_html( $title )
+						)
+					);
+				}
+
 				if ( ! $this->is_valid_time_format( $start_time ) ) {
 					throw new Exception( 'Invalid time format for chapter: ' . esc_html( $start_time ) );
 				}
