@@ -89,6 +89,7 @@ if ( ! class_exists( 'Video_Chapters_DB' ) ) {
 				INNER JOIN {$wpdb->prefix}post_videos v ON v.id = c.video_id
 				WHERE c.title LIKE %s
 				AND v.is_old = 0
+				AND v.platform = 'youtube'
 				GROUP BY c.title
 				ORDER BY COUNT(*) DESC, c.title ASC
 				LIMIT 10
